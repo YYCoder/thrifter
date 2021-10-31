@@ -1,6 +1,7 @@
 package thrifter
 
 import (
+	"bytes"
 	"strings"
 )
 
@@ -13,6 +14,7 @@ const (
 	tILLEGAL token = iota
 	tEOF
 	tIDENT
+	tSTRING // string literal
 
 	// white space
 	tSPACE
@@ -151,20 +153,33 @@ func toToken(literal string) token {
 	case "throws":
 		return tTHROWS
 	default:
-		if isComment(literal) {
-			return tCOMMENT
-		}
 		return tIDENT
 	}
 }
 
-func isComment(lit string) bool {
-	return strings.HasPrefix(lit, "//") || strings.HasPrefix(lit, "/*")
-}
+// comment type
+const (
+	SINGLE_LINE_COMMENT = iota + 1 // like this
+	MULTI_LINE_COMMENT             /* like this */
+	BASH_LIKE_COMMENT              // # like this
+)
 
 // isDigit returns true if the rune is a digit.
 func isDigit(lit rune) bool {
 	return (lit >= '0' && lit <= '9')
+}
+
+func getCommentValue(raw string, commentType int) (res string) {
+	switch commentType {
+	case SINGLE_LINE_COMMENT:
+		res = strings.Replace(raw, "//", "", 1)
+	case MULTI_LINE_COMMENT:
+		res = strings.ReplaceAll(raw, "/*", "")
+		res = strings.ReplaceAll(res, "*/", "")
+	case BASH_LIKE_COMMENT:
+		res = strings.Replace(raw, "#", "", 1)
+	}
+	return
 }
 
 // isKeyword returns if tok is in the keywords range
@@ -176,4 +191,35 @@ func isWhitespace(tok token) bool {
 	return tok == tSPACE || tok == tLINEBREAK || tok == tRETURN || tok == tTAB
 }
 
-const doubleQuoteRune = rune('"')
+func toString(start *Token, end *Token) string {
+	var res bytes.Buffer
+	curr := start
+	for curr != end {
+		res.WriteString(curr.Raw)
+		curr = curr.Next
+	}
+	res.WriteString(end.Raw)
+	return res.String()
+}
+
+const singleQuoteString = "'"
+const singleQuoteRune = '\''
+const doubleQuoteString = "\""
+const doubleQuoteRune = '"'
+
+// UnQuote removes one matching leading and trailing single or double quote.
+// cannot use strconv.Unquote as this unescapes quotes.
+func unQuote(lit string) (string, rune) {
+	if len(lit) < 2 {
+		return lit, doubleQuoteRune
+	}
+	chars := []rune(lit)
+	first, last := chars[0], chars[len(chars)-1]
+	if first != last {
+		return lit, doubleQuoteRune
+	}
+	if s := string(chars[0]); s == doubleQuoteString || s == singleQuoteString {
+		return string(chars[1 : len(chars)-1]), chars[0]
+	}
+	return lit, doubleQuoteRune
+}

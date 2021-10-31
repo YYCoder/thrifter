@@ -3,26 +3,20 @@ package thrifter
 import "text/scanner"
 
 type NodeCommonField struct {
-	Parent     *Node
-	Next       *Node
-	Prev       *Node
+	Parent     Node
+	Next       Node
+	Prev       Node
 	StartToken *Token
 	EndToken   *Token
 }
 
-type Position struct {
-	scanner.Position
-	OffsetStart int
-	OffsetEnd   int
-}
-
 type Token struct {
 	Type  token
-	Raw   string
-	Value string
+	Raw   string // tokens raw value, e.g. comments contain prefix, like // or /* or #; strings contain ' or "
+	Value string // tokens transformed value
 	Next  *Token
 	Prev  *Token
-	Pos   Position
+	Pos   scanner.Position
 }
 
 type Node interface {

@@ -4,17 +4,29 @@ type Thrift struct {
 	NodeCommonField
 	// thrift file name, if it exists
 	FileName string
-	Nodes    []*Node
+	// since Thrift is the root node, we need a property to access its children
+	Nodes       []*Node
+	currentNode *Node
 }
 
-func (t *Thrift) parse(p *Parser) (err error) {
-	tok, err := p.next()
-	if err != nil {
-		// TODO:
+func NewThrift(start *Token, parent Node) *Thrift {
+	return &Thrift{
+		NodeCommonField: NodeCommonField{
+			Parent:     parent,
+			StartToken: start,
+		},
 	}
+}
 
-	if t.StartToken == nil {
-		t.StartToken = tok
+func (r *Thrift) String() string {
+	return toString(r.StartToken, r.EndToken)
+}
+
+func (r *Thrift) parse(p *Parser) (err error) {
+	tok := p.next()
+
+	if r.StartToken == nil {
+		r.StartToken = tok
 	}
 
 	switch {
@@ -23,8 +35,10 @@ func (t *Thrift) parse(p *Parser) (err error) {
 		tok.Type == tLINEBREAK ||
 		tok.Type == tRETURN ||
 		tok.Type == tTAB:
-		err = t.parse(p)
+		err = r.parse(p)
 	case tok.Type == tNAMESPACE:
+		namespace := NewNamespace(tok, r)
+		err = namespace.parse(p)
 	case tok.Type == tENUM:
 	case tok.Type == tCONST:
 	case tok.Type == tSERVICE:
@@ -34,11 +48,11 @@ func (t *Thrift) parse(p *Parser) (err error) {
 	case tok.Type == tUNION:
 	case tok.Type == tEXCEPTION:
 	case tok.Type == tEOF:
-		t.EndToken = tok
+		r.EndToken = tok
 		goto done
 	default:
 		// err = t.parse(p)
-		return p.unexpected(tok.Raw, ".thrift element {namespace|enum|const|service|struct|include|typedef|union|exception}", p)
+		return p.unexpected(tok.Raw, ".thrift element {namespace|enum|const|service|struct|include|typedef|union|exception}")
 	}
 done:
 	return
