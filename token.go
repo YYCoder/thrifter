@@ -15,6 +15,7 @@ const (
 	tEOF
 	tIDENT
 	tSTRING // string literal
+	tNUMBER // integer or float
 
 	// white space
 	tSPACE
@@ -39,6 +40,8 @@ const (
 	tGREATER     // >
 	tCOMMA       // ,
 	tDOT         // .
+	tPLUS        // +
+	tMINUS       // -
 
 	// declaration keywords
 	keywordStart
@@ -110,6 +113,10 @@ func toToken(literal string) token {
 		return tCOMMA
 	case ".":
 		return tDOT
+	case "+":
+		return tPLUS
+	case "-":
+		return tMINUS
 
 	// declaration keywords
 	case "namespace":

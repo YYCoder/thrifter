@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"text/scanner"
 )
 
@@ -267,6 +268,19 @@ func (p *Parser) nextString() (res *Token, err error) {
 		p.currToken.Next = res
 	}
 	p.currToken = res
+	return
+}
+
+// determine whether it is an integer or a float number
+func (p *Parser) isNumber(str string) (isFloat bool, isInt bool) {
+	isFloat, _ = regexp.MatchString("^\\d+\\.\\d+$", str)
+	isInt, _ = regexp.MatchString("^\\d+$", str)
+	return
+}
+
+// assume we found next token is a number
+func (p *Parser) nextNumber() (res *Token, err error) {
+	p.next()
 	return
 }
 
