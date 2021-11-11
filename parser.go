@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"text/scanner"
 )
 
@@ -77,10 +76,7 @@ func (p *Parser) next() (res *Token) {
 			Pos:   p.scanner.Position,
 		}
 	}
-	if p.currToken != nil {
-		p.currToken.Next = res
-	}
-	p.currToken = res
+	p.chainToken(res)
 	return
 }
 
@@ -151,10 +147,16 @@ func (p *Parser) nextComment(commentType int) (res *Token, err error) {
 // TODO: concat dot-separated ident into one token
 // Find next identifier, it will consume white spaces during scanning.
 // 1. Allow leading && trailing dot.
-// 2. If keywordAllowed == true, it will allow keyword inside an identifier, e.g. enum.aaa.struct. In this case, the token for keyword will be replace to tIDENT, since
-// the meaning for is no more a keyword.
+// 2. If keywordAllowed == true, it will allow keyword inside an identifier, e.g. enum.aaa.struct. In this case, the token for keyword will be replace to tIDENT, since the meaning for it is no more a keyword.
 // 3. For dot-separated identifier, it will automatically connected to a single string.
 func (p *Parser) nextIdent(keywordAllowed bool) (res string, startToken *Token, endToken *Token) {
+	// if buffer containers a token, consume buffer first
+	if p.buf != nil && p.buf.Type == tIDENT {
+		res = p.buf.Value
+		p.buf = nil
+		return
+	}
+
 	t := p.nextNonWhitespace()
 	tok, lit := t.Type, t.Value
 	if tIDENT != tok && tDOT != tok {
@@ -180,6 +182,7 @@ func (p *Parser) nextIdent(keywordAllowed bool) (res string, startToken *Token, 
 			fullLit = ""
 		} else {
 			r := p.peek()
+			// TODO: support identifier with underscore
 			if '.' != r {
 				break
 			}
@@ -209,7 +212,15 @@ func (p *Parser) peek() rune {
 func (p *Parser) nextNonWhitespace() (res *Token) {
 	r := p.peek()
 	if isWhitespace(toToken(string(r))) {
-		p.next() // consume whitespaces
+		r = p.scanner.Next() // consume whitespaces
+		tok := &Token{
+			Type:  toToken(string(r)),
+			Raw:   string(r),
+			Value: string(r),
+			Prev:  p.currToken,
+			Pos:   p.scanner.Position,
+		}
+		p.chainToken(tok)
 		return p.nextNonWhitespace()
 	}
 	return p.next()
@@ -219,7 +230,15 @@ func (p *Parser) nextNonWhitespace() (res *Token) {
 func (p *Parser) peekNonWhitespace() (r rune) {
 	r = p.peek()
 	if isWhitespace(toToken(string(r))) {
-		p.next() // consume whitespaces
+		r = p.scanner.Next() // consume whitespaces
+		tok := &Token{
+			Type:  toToken(string(r)),
+			Raw:   string(r),
+			Value: string(r),
+			Prev:  p.currToken,
+			Pos:   p.scanner.Position,
+		}
+		p.chainToken(tok)
 		return p.peekNonWhitespace()
 	}
 	return r
@@ -239,7 +258,7 @@ func (p *Parser) nextString() (res *Token, err error) {
 	if quoteType == tSINGLEQUOTE {
 		fullLit = singleQuoteString
 	} else {
-		fullLit = doubleQuoteString
+		fullLit = quoteString
 	}
 
 	for {
@@ -264,23 +283,61 @@ func (p *Parser) nextString() (res *Token, err error) {
 		Prev:  p.currToken,
 		Pos:   p.scanner.Position,
 	}
-	if p.currToken != nil {
-		p.currToken.Next = res
+	p.chainToken(res)
+	return
+}
+
+// assume we found next token is a number, if it is minus number, concat minus symbol and digits into one token
+func (p *Parser) nextNumber() (res *Token, err error, isFloat bool, isInt bool) {
+	var fullLit string
+	r := p.peekNonWhitespace()
+	if isDigit(r) {
+		p.scanner.Scan()
+		fullLit = p.scanner.TokenText()
+		if isFloat, isInt = isNumber(fullLit); !isFloat && !isInt {
+			err = p.unexpected("digit", fullLit)
+			return
+		}
+		res = &Token{
+			Type:  tNUMBER,
+			Raw:   fullLit,
+			Value: fullLit,
+			Prev:  p.currToken,
+			Pos:   p.scanner.Position,
+		}
+		p.chainToken(res)
+	} else if toToken(string(r)) == tMINUS {
+		p.scanner.Next() // consume minus symbol
+		fullLit = "-"
+		p.scanner.Scan()
+		num := p.scanner.TokenText()
+		if isFloat, isInt = isNumber(num); !isFloat && !isInt {
+			err = p.unexpected("digit", num)
+			return
+		} else {
+			fullLit += num
+		}
+		res = &Token{
+			Type:  tNUMBER,
+			Raw:   fullLit,
+			Value: fullLit,
+			Prev:  p.currToken,
+			Pos:   p.scanner.Position,
+		}
+		p.chainToken(res)
+	} else {
+		err = p.unexpected("- symbol or digit", string(r))
+		return
 	}
-	p.currToken = res
 	return
 }
 
-// determine whether it is an integer or a float number
-func (p *Parser) isNumber(str string) (isFloat bool, isInt bool) {
-	isFloat, _ = regexp.MatchString("^\\d+\\.\\d+$", str)
-	isInt, _ = regexp.MatchString("^\\d+$", str)
-	return
-}
-
-// assume we found next token is a number
-func (p *Parser) nextNumber() (res *Token, err error) {
-	p.next()
+// chain token to current token's next pointer
+func (p *Parser) chainToken(tok *Token) {
+	if p.currToken != nil {
+		p.currToken.Next = tok
+	}
+	p.currToken = tok
 	return
 }
 

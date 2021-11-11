@@ -11,7 +11,8 @@ const (
 
 type Const struct {
 	NodeCommonField
-	Name  string
+	Ident string
+	Type  *FieldType
 	Value *ConstValue
 }
 
@@ -29,6 +30,30 @@ func (r *Const) String() string {
 }
 
 func (r *Const) parse(p *Parser) (err error) {
+	p.peekNonWhitespace()
+	r.Type = NewFieldType(r)
+	if err = r.Type.parse(p); err != nil {
+		return
+	}
+	p.peekNonWhitespace()
+	ident, _, _ := p.nextIdent(false)
+	r.Ident = ident
+	ru := p.peekNonWhitespace()
+	if toToken(string(ru)) != tEQUALS {
+		return p.unexpected(string(ru), "=")
+	}
+	p.next() // consume tEQUALS
+	r.Value = NewConstValue(r)
+	if err = r.Value.parse(p); err != nil {
+		return
+	}
+	ru = p.peekNonWhitespace()
+	if toToken(string(ru)) == tCOMMA || toToken(string(ru)) == tSEMICOLON {
+		r.EndToken = p.next() // consume comma or semicolon
+	} else {
+		r.EndToken = r.Value.EndToken
+	}
+
 	return
 }
 
@@ -53,42 +78,72 @@ func (r *ConstValue) String() string {
 }
 
 func (r *ConstValue) parse(p *Parser) (err error) {
-	startTok := p.next()
+	ru := p.peekNonWhitespace()
+	tok := toToken(string(ru))
 
-	if startTok.Type == tMINUS {
-		tok := p.next()
-		isFloat, isInt := p.isNumber(tok.Value)
-		if !isFloat && !isInt {
-			return p.unexpected(tok.Value, "float or int after - symbol")
+	// if it's minus symbol or a digit
+	if tok == tMINUS || isDigit(ru) {
+		numberTok, err, isFloat, isInt := p.nextNumber()
+		if err != nil {
+			return err
 		}
 		if isFloat {
 			r.Type = CONST_VALUE_FLOAT
-			r.Value = tok.Value
 		} else if isInt {
 			r.Type = CONST_VALUE_INT
-			r.Value = tok.Value
 		}
-		r.EndToken = tok
-	} else if isFloat, isInt := p.isNumber(startTok.Value); isFloat || isInt {
-		if isFloat {
-			r.Type = CONST_VALUE_FLOAT
-			r.Value = startTok.Value
-		} else if isInt {
-			r.Type = CONST_VALUE_INT
-			r.Value = startTok.Value
+		r.StartToken = numberTok
+		r.EndToken = numberTok
+		r.Value = numberTok.Value
+	} else if ru == singleQuoteRune || ru == quoteRune {
+		strTok, err := p.nextString()
+		if err != nil {
+			return err
 		}
-		r.EndToken = startTok
+		r.Type = CONST_VALUE_LITERAL
+		r.StartToken = strTok
+		r.EndToken = strTok
+		r.Value = strTok.Raw
+	} else if tok == tLEFTSQUARE {
+		leftSquareTok := p.next()
+		r.Type = CONST_VALUE_LIST
+		r.StartToken = leftSquareTok
+		r.List = NewConstList(leftSquareTok, r)
+		err = r.List.parse(p)
+		if err != nil {
+			return err
+		}
+		r.EndToken = r.List.EndToken
+	} else if tok == tLEFTCURLY {
+		leftCurlyTok := p.next()
+		r.Type = CONST_VALUE_MAP
+		r.StartToken = leftCurlyTok
+		r.Map = NewConstMap(leftCurlyTok, r)
+		err = r.Map.parse(p)
+		if err != nil {
+			return err
+		}
+		r.EndToken = r.Map.EndToken
+	} else {
+		fullLit, startTok, endTok := p.nextIdent(false)
+		if startTok.Type != tIDENT || endTok.Type != tIDENT {
+			return p.unexpected("identifier", fullLit)
+		}
+		r.Type = CONST_VALUE_IDENT
+		r.StartToken = startTok
+		r.EndToken = endTok
+		r.Value = fullLit
 	}
-
-	r.StartToken = startTok
 
 	return
 }
 
 type ConstMap struct {
 	NodeCommonField
-	Key   ConstValue
-	Value ConstValue
+	MapKeyList   []ConstValue
+	MapValueList []ConstValue
+	// since directly use map structure its hard to index, we use slice to represent const map, use slice index to mapping
+	// Map map[ConstValue]ConstValue
 }
 
 func NewConstMap(start *Token, parent Node) *ConstMap {
@@ -97,6 +152,7 @@ func NewConstMap(start *Token, parent Node) *ConstMap {
 			Parent:     parent,
 			StartToken: start,
 		},
+		// Map: map[ConstValue]ConstValue{},
 	}
 }
 
@@ -105,6 +161,42 @@ func (r *ConstMap) String() string {
 }
 
 func (r *ConstMap) parse(p *Parser) (err error) {
+	p.peekNonWhitespace()
+	for {
+		ru := p.peekNonWhitespace() // consume white spaces
+		ruTok := toToken(string(ru))
+		if ruTok == tRIGHTCURLY {
+			r.EndToken = p.next() // consume right curly
+			break
+		}
+
+		keyNode := NewConstValue(r)
+		err = keyNode.parse(p)
+		if err != nil {
+			return err
+		}
+		ru = p.peekNonWhitespace() // consume white spaces
+		if toToken(string(ru)) != tCOLON {
+			return p.unexpected(":", string(ru))
+		}
+		p.next()              // consume tCOLON
+		p.peekNonWhitespace() // consume white spaces
+		valNode := NewConstValue(r)
+		err = valNode.parse(p)
+		if err != nil {
+			return err
+		}
+
+		r.MapKeyList = append(r.MapKeyList, *keyNode)
+		r.MapValueList = append(r.MapValueList, *valNode)
+
+		ru = p.peekNonWhitespace() // consume white spaces
+		ruTok = toToken(string(ru))
+		if ruTok == tCOMMA || ruTok == tSEMICOLON {
+			p.next() // consume separator
+		}
+
+	}
 	return
 }
 
@@ -127,5 +219,26 @@ func (r *ConstList) String() string {
 }
 
 func (r *ConstList) parse(p *Parser) (err error) {
+	p.peekNonWhitespace()
+	for {
+		ru := p.peekNonWhitespace()
+		nextTok := toToken(string(ru))
+		// const list end
+		if nextTok == tRIGHTSQUARE {
+			r.EndToken = p.next() // consume right square
+			break
+		}
+		valNode := NewConstValue(r)
+		err = valNode.parse(p)
+		if err != nil {
+			return err
+		}
+		r.Elems = append(r.Elems, valNode)
+		ru = p.peekNonWhitespace()
+		nextTok = toToken(string(ru))
+		if nextTok == tCOMMA || nextTok == tSEMICOLON {
+			p.next() // consume list separator
+		}
+	}
 	return
 }

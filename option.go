@@ -33,7 +33,7 @@ func (r *Option) parse(p *Parser) (err error) {
 	}
 	// find next string
 	nextRune := p.peekNonWhitespace()
-	if nextRune != singleQuoteRune && nextRune != doubleQuoteRune {
+	if nextRune != singleQuoteRune && nextRune != quoteRune {
 		err = p.unexpected(tok.Value, "' or \"")
 		return
 	}

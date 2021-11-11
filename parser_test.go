@@ -11,7 +11,7 @@ func newParserOn(def string) *Parser {
 }
 
 func TestNextIdent_singleIdent(t *testing.T) {
-	parser := newParserOn(` ab2 `)
+	parser := newParserOn(`   ab2 `)
 	lit, start, end := parser.nextIdent(false)
 
 	if got, want := start.Type, tIDENT; got != want {
@@ -82,6 +82,21 @@ func TestNextIdent_leadingAndTrailingDot(t *testing.T) {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 	if got, want := lit, ".abc.def."; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+}
+
+func TestNextIdent_underscore(t *testing.T) {
+	parser := newParserOn(`abc_def_123 `)
+	lit, start, end := parser.nextIdent(false)
+
+	if got, want := start.Type, tIDENT; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := start, end; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := lit, "abc_def_123"; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 }
@@ -221,6 +236,54 @@ func TestIsComment_multiLineBasic(t *testing.T) {
 	}
 	if got, want := tok.Raw, `/*123123 asasd
 	*/`; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+}
+
+func TestIsComment_nextNumberPositiveInt(t *testing.T) {
+	parser := newParserOn(`123123`)
+	tok, _, _, _ := parser.nextNumber()
+
+	if got, want := tok.Type, tNUMBER; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := tok.Value, `123123`; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+}
+
+func TestIsComment_nextNumberNegativeInt(t *testing.T) {
+	parser := newParserOn(`-123123`)
+	tok, _, _, _ := parser.nextNumber()
+
+	if got, want := tok.Type, tNUMBER; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := tok.Value, `-123123`; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+}
+
+func TestIsComment_nextNumberPositiveFloat(t *testing.T) {
+	parser := newParserOn(`0.123`)
+	tok, _, _, _ := parser.nextNumber()
+
+	if got, want := tok.Type, tNUMBER; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := tok.Value, `0.123`; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+}
+
+func TestIsComment_nextNumberNegativeFloat(t *testing.T) {
+	parser := newParserOn(`-0.123`)
+	tok, _, _, _ := parser.nextNumber()
+
+	if got, want := tok.Type, tNUMBER; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := tok.Value, `-0.123`; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 }

@@ -2,12 +2,22 @@ package thrifter
 
 import (
 	"bytes"
+	"regexp"
 	"strings"
 )
 
 type token int
 
-const baseTypeTokens = "bool byte i8 i16 i32 i64 double string binary slist"
+var baseTypeTokens = []string{"bool", "byte", "i8", "i16", "i32", "i64", "double", "string", "binary", "slist"}
+
+func isBaseTypeToken(str string) bool {
+	for _, s := range baseTypeTokens {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
 
 const (
 	// special tokens
@@ -176,6 +186,13 @@ func isDigit(lit rune) bool {
 	return (lit >= '0' && lit <= '9')
 }
 
+// determine whether it is an integer or a float number
+func isNumber(str string) (isFloat bool, isInt bool) {
+	isFloat, _ = regexp.MatchString("^\\d+\\.\\d+$", str)
+	isInt, _ = regexp.MatchString("^\\d+$", str)
+	return
+}
+
 func getCommentValue(raw string, commentType int) (res string) {
 	switch commentType {
 	case SINGLE_LINE_COMMENT:
@@ -211,22 +228,22 @@ func toString(start *Token, end *Token) string {
 
 const singleQuoteString = "'"
 const singleQuoteRune = '\''
-const doubleQuoteString = "\""
-const doubleQuoteRune = '"'
+const quoteString = "\""
+const quoteRune = '"'
 
 // UnQuote removes one matching leading and trailing single or double quote.
 // cannot use strconv.Unquote as this unescapes quotes.
 func unQuote(lit string) (string, rune) {
 	if len(lit) < 2 {
-		return lit, doubleQuoteRune
+		return lit, quoteRune
 	}
 	chars := []rune(lit)
 	first, last := chars[0], chars[len(chars)-1]
 	if first != last {
-		return lit, doubleQuoteRune
+		return lit, quoteRune
 	}
-	if s := string(chars[0]); s == doubleQuoteString || s == singleQuoteString {
+	if s := string(chars[0]); s == quoteString || s == singleQuoteString {
 		return string(chars[1 : len(chars)-1]), chars[0]
 	}
-	return lit, doubleQuoteRune
+	return lit, quoteRune
 }
