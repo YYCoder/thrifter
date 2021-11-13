@@ -25,6 +25,14 @@ func NewConst(start *Token, parent Node) *Const {
 	}
 }
 
+func (r *Const) NodeType() string {
+	return "Const"
+}
+
+func (r *Const) NodeValue() interface{} {
+	return *r
+}
+
 func (r *Const) String() string {
 	return toString(r.StartToken, r.EndToken)
 }
@@ -71,6 +79,14 @@ func NewConstValue(parent Node) *ConstValue {
 			Parent: parent,
 		},
 	}
+}
+
+func (r *ConstValue) NodeType() string {
+	return "ConstValue"
+}
+
+func (r *ConstValue) NodeValue() interface{} {
+	return *r
 }
 
 func (r *ConstValue) String() string {
@@ -156,6 +172,14 @@ func NewConstMap(start *Token, parent Node) *ConstMap {
 	}
 }
 
+func (r *ConstMap) NodeValue() interface{} {
+	return *r
+}
+
+func (r *ConstMap) NodeType() string {
+	return "ConstMap"
+}
+
 func (r *ConstMap) String() string {
 	return toString(r.StartToken, r.EndToken)
 }
@@ -212,6 +236,14 @@ func NewConstList(start *Token, parent Node) *ConstList {
 			StartToken: start,
 		},
 	}
+}
+
+func (r *ConstList) NodeType() string {
+	return "ConstList"
+}
+
+func (r *ConstList) NodeValue() interface{} {
+	return *r
 }
 
 func (r *ConstList) String() string {

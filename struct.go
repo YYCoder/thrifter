@@ -33,6 +33,22 @@ func NewStruct(start *Token, parent Node) *Struct {
 	}
 }
 
+func (r *Struct) NodeType() string {
+	switch r.Type {
+	case STRUCT:
+		return "Struct"
+	case UNION:
+		return "Union"
+	case EXCEPTION:
+		return "Exception"
+	}
+	return ""
+}
+
+func (r *Struct) NodeValue() interface{} {
+	return *r
+}
+
 func (r *Struct) String() string {
 	return toString(r.StartToken, r.EndToken)
 }
@@ -66,36 +82,10 @@ func (r *Struct) parse(p *Parser) (err error) {
 		r.EndToken = rightParenTok
 		return
 	}
-	r.Options, err = r.parseOptions(p)
+	p.next() // consume (
+	r.Options, r.EndToken, err = parseOptions(p, r)
 	if err != nil {
 		return err
-	}
-	return
-}
-
-func (r *Struct) parseOptions(p *Parser) (res []*Option, err error) {
-	p.next() // consume (
-
-	res = []*Option{}
-	var currOption *Option
-	for {
-		ru := p.peekNonWhitespace()
-		if toToken(string(ru)) == tRIGHTPAREN {
-			r.EndToken = p.next()
-			break
-		}
-
-		currOption = NewOption(r)
-		err = currOption.parse(p)
-		if err != nil {
-			return
-		}
-		res = append(res, currOption)
-
-		ru = p.peekNonWhitespace()
-		if toToken(string(ru)) == tCOMMA {
-			p.next() // consume comma
-		}
 	}
 	return
 }

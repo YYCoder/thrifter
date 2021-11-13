@@ -24,10 +24,8 @@ type Node interface {
 	String() string
 	// recursively parse current node and its children
 	parse(p *Parser) error
-}
-
-// Nodes have children, e.g. enum/service/struct/union
-type Container interface {
-	elements() []*Node
-	addElement(node *Node)
+	// get node value
+	NodeValue() interface{}
+	// get node type, value specified as above, e.g. NODE_TYPE_CONST
+	NodeType() string
 }

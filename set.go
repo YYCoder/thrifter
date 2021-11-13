@@ -15,6 +15,14 @@ func NewSetType(start *Token, parent Node) *SetType {
 	}
 }
 
+func (r *SetType) NodeType() string {
+	return "SetType"
+}
+
+func (r *SetType) NodeValue() interface{} {
+	return *r
+}
+
 func (r *SetType) String() string {
 	return toString(r.StartToken, r.EndToken)
 }

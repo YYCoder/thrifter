@@ -14,6 +14,14 @@ func NewInclude(start *Token, parent Node) *Include {
 	}
 }
 
+func (r *Include) NodeType() string {
+	return "Include"
+}
+
+func (r *Include) NodeValue() interface{} {
+	return *r
+}
+
 func (r *Include) String() string {
 	return toString(r.StartToken, r.EndToken)
 }

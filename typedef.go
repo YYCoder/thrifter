@@ -2,8 +2,9 @@ package thrifter
 
 type TypeDef struct {
 	NodeCommonField
-	Type  *FieldType // except for identifier
-	Ident string
+	Type    *FieldType // except for identifier
+	Ident   string
+	Options []*Option
 }
 
 func NewTypeDef(start *Token, parent Node) *TypeDef {
@@ -13,6 +14,14 @@ func NewTypeDef(start *Token, parent Node) *TypeDef {
 			StartToken: start,
 		},
 	}
+}
+
+func (r *TypeDef) NodeType() string {
+	return "TypeDef"
+}
+
+func (r *TypeDef) NodeValue() interface{} {
+	return *r
 }
 
 func (r *TypeDef) String() string {
@@ -32,5 +41,16 @@ func (r *TypeDef) parse(p *Parser) (err error) {
 	fullLit, _, endTok := p.nextIdent(true)
 	r.Ident = fullLit
 	r.EndToken = endTok
+
+	// parse options
+	ru := p.peekNonWhitespace()
+	if toToken(string(ru)) != tLEFTPAREN {
+		return
+	}
+	p.next() // consume (
+	r.Options, r.EndToken, err = parseOptions(p, r)
+	if err != nil {
+		return err
+	}
 	return
 }

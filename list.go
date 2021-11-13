@@ -15,6 +15,14 @@ func NewListType(start *Token, parent Node) *ListType {
 	}
 }
 
+func (r *ListType) NodeValue() interface{} {
+	return *r
+}
+
+func (r *ListType) NodeType() string {
+	return "ListType"
+}
+
 func (r *ListType) String() string {
 	return toString(r.StartToken, r.EndToken)
 }
@@ -36,6 +44,7 @@ func (r *ListType) parseElem(p *Parser) (err error) {
 	if err = r.Elem.parse(p); err != nil {
 		return
 	}
+	p.peekNonWhitespace()
 	greaterTok := p.next()
 	if greaterTok.Type != tGREATER {
 		err = p.unexpected(greaterTok.Value, ">")

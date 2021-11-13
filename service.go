@@ -5,6 +5,7 @@ type Service struct {
 	Ident   string
 	Elems   []*Function
 	Extends string
+	Options []*Option
 }
 
 func NewService(start *Token, parent Node) *Service {
@@ -14,6 +15,14 @@ func NewService(start *Token, parent Node) *Service {
 			StartToken: start,
 		},
 	}
+}
+
+func (r *Service) NodeType() string {
+	return "Service"
+}
+
+func (r *Service) NodeValue() interface{} {
+	return *r
 }
 
 func (r *Service) String() string {
@@ -27,6 +36,16 @@ func (r *Service) parse(p *Parser) (err error) {
 	tok := p.nextNonWhitespace()
 	if tok.Type == tLEFTCURLY {
 		r.Elems, err = r.parseFunctions(p)
+		if err != nil {
+			return err
+		}
+		// parse options
+		ru := p.peekNonWhitespace()
+		if toToken(string(ru)) != tLEFTPAREN {
+			return
+		}
+		p.next() // consume (
+		r.Options, r.EndToken, err = parseOptions(p, r)
 		if err != nil {
 			return err
 		}
@@ -86,6 +105,14 @@ func NewFunction(parent Node) *Function {
 			Parent: parent,
 		},
 	}
+}
+
+func (r *Function) NodeType() string {
+	return "Function"
+}
+
+func (r *Function) NodeValue() interface{} {
+	return *r
 }
 
 func (r *Function) String() string {

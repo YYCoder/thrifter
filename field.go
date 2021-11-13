@@ -21,6 +21,14 @@ func NewField(parent Node) *Field {
 	}
 }
 
+func (r *Field) NodeType() string {
+	return "Field"
+}
+
+func (r *Field) NodeValue() interface{} {
+	return *r
+}
+
 func (r *Field) String() string {
 	return toString(r.StartToken, r.EndToken)
 }

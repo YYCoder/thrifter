@@ -57,6 +57,7 @@ const (
 	keywordStart
 	tNAMESPACE
 	tENUM
+	tSENUM // currently not supported
 	tCONST
 	tSERVICE
 	tSTRUCT
@@ -134,6 +135,8 @@ func toToken(literal string) token {
 		return tNAMESPACE
 	case "enum":
 		return tENUM
+	case "senum":
+		return tSENUM
 	case "const":
 		return tCONST
 	case "service":

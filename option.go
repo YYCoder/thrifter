@@ -15,6 +15,14 @@ func NewOption(parent Node) *Option {
 	}
 }
 
+func (r *Option) NodeType() string {
+	return "Option"
+}
+
+func (r *Option) NodeValue() interface{} {
+	return *r
+}
+
 func (r *Option) String() string {
 	return toString(r.StartToken, r.EndToken)
 }
@@ -25,10 +33,9 @@ func (r *Option) parse(p *Parser) (err error) {
 	if start == nil || start.Type != tIDENT {
 		return p.unexpected(name, "identifier")
 	}
-	// find equal token
+	// if there is no = token
 	tok := p.nextNonWhitespace()
 	if tok.Type != tEQUALS {
-		err = p.unexpected(tok.Value, "=")
 		return
 	}
 	// find next string
@@ -52,5 +59,30 @@ func (r *Option) parse(p *Parser) (err error) {
 	r.Next = nil
 	r.Prev = nil
 
+	return
+}
+
+func parseOptions(p *Parser, parent Node) (res []*Option, rightParenTok *Token, err error) {
+	res = []*Option{}
+	var currOption *Option
+	for {
+		ru := p.peekNonWhitespace()
+		if toToken(string(ru)) == tRIGHTPAREN {
+			rightParenTok = p.next()
+			break
+		}
+
+		currOption = NewOption(parent)
+		err = currOption.parse(p)
+		if err != nil {
+			return
+		}
+		res = append(res, currOption)
+
+		ru = p.peekNonWhitespace()
+		if toToken(string(ru)) == tCOMMA {
+			p.next() // consume comma
+		}
+	}
 	return
 }

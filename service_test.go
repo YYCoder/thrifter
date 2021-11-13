@@ -33,6 +33,36 @@ func TestService_basic(t *testing.T) {
 	}
 }
 
+func TestService_withOptions(t *testing.T) {
+	parser := newParserOn(`service foo_service {
+		void foo() ( foo = "bar" )
+	  } (a.b="c")`)
+	start := parser.next()
+	n := NewService(start, nil)
+	if err := n.parse(parser); err != nil {
+		t.Errorf("unexpected error: %v", err)
+		return
+	}
+
+	if got, want := n.Ident, "foo_service"; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := len(n.Elems), 1; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := len(n.Options), 1; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := n.Options[0].Name, "a.b"; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := n.StartToken.Value, "service"; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := n.EndToken.Value, ")"; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+}
 func TestService_withExtends(t *testing.T) {
 	parser := newParserOn(`service A extends B{
 	}`)
@@ -194,6 +224,24 @@ func TestService_toString(t *testing.T) {
 		# asdasd
 		Xtruct testMulti(1: i8 arg0, 2: i32 arg1, 3: i64 arg2, 4: map<i16, string> arg3, 5: Numberz arg4, 6: UserId arg5)
 	}`
+	parser := newParserOn(src)
+	start := parser.next()
+	n := NewService(start, nil)
+	if err := n.parse(parser); err != nil {
+		t.Errorf("unexpected error: %v", err)
+		return
+	}
+	res := n.String()
+
+	if got, want := res, src; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+}
+
+func TestService_toStringWithOptions(t *testing.T) {
+	src := `service foo_service {
+		void foo() ( foo = "bar" )
+	  } (a.b="c")`
 	parser := newParserOn(src)
 	start := parser.next()
 	n := NewService(start, nil)

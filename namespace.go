@@ -16,6 +16,14 @@ func NewNamespace(start *Token, parent Node) *Namespace {
 	}
 }
 
+func (r *Namespace) NodeValue() interface{} {
+	return *r
+}
+
+func (r *Namespace) NodeType() string {
+	return "Namespace"
+}
+
 func (r *Namespace) String() string {
 	return toString(r.StartToken, r.EndToken)
 }
@@ -31,26 +39,9 @@ func (r *Namespace) parse(p *Parser) (err error) {
 	}
 	p.next() // consume (
 
-	r.Options = []*Option{}
-	var currOption *Option
-	for {
-		ru := p.peekNonWhitespace()
-		if toToken(string(ru)) == tRIGHTPAREN {
-			r.EndToken = p.next()
-			break
-		}
-
-		currOption = NewOption(r)
-		err = currOption.parse(p)
-		if err != nil {
-			return
-		}
-		r.Options = append(r.Options, currOption)
-
-		ru = p.peekNonWhitespace()
-		if toToken(string(ru)) == tCOMMA {
-			p.next() // consume comma
-		}
+	r.Options, r.EndToken, err = parseOptions(p, r)
+	if err != nil {
+		return err
 	}
 	return
 }

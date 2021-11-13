@@ -17,6 +17,14 @@ func NewMapType(start *Token, parent Node) *MapType {
 	}
 }
 
+func (r *MapType) NodeType() string {
+	return "MapType"
+}
+
+func (r *MapType) NodeValue() interface{} {
+	return *r
+}
+
 func (r *MapType) String() string {
 	return toString(r.StartToken, r.EndToken)
 }

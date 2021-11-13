@@ -28,6 +28,14 @@ func NewFieldType(parent Node) *FieldType {
 	}
 }
 
+func (r *FieldType) NodeType() string {
+	return "FieldType"
+}
+
+func (r *FieldType) NodeValue() interface{} {
+	return *r
+}
+
 func (r *FieldType) String() string {
 	return toString(r.StartToken, r.EndToken)
 }
@@ -70,12 +78,11 @@ func (r *FieldType) parse(p *Parser) (err error) {
 	// parse options
 	// list type may save token to buffer, since it need to scan next cpp_type token
 	if p.buf != nil {
-		tok := p.buf
-		p.buf = nil
-		if tok.Type != tLEFTPAREN {
+		if p.buf.Type != tLEFTPAREN {
 			return
 		}
-		r.Options, err = r.parseOptions(p)
+		p.buf = nil
+		r.Options, r.EndToken, err = parseOptions(p, r)
 		if err != nil {
 			return err
 		}
@@ -85,36 +92,11 @@ func (r *FieldType) parse(p *Parser) (err error) {
 			return
 		}
 		p.next() // consume (
-		r.Options, err = r.parseOptions(p)
+		r.Options, r.EndToken, err = parseOptions(p, r)
 		if err != nil {
 			return err
 		}
 	}
 
-	return
-}
-
-func (r *FieldType) parseOptions(p *Parser) (res []*Option, err error) {
-	res = []*Option{}
-	var currOption *Option
-	for {
-		ru := p.peekNonWhitespace()
-		if toToken(string(ru)) == tRIGHTPAREN {
-			r.EndToken = p.next()
-			break
-		}
-
-		currOption = NewOption(r)
-		err = currOption.parse(p)
-		if err != nil {
-			return
-		}
-		res = append(res, currOption)
-
-		ru = p.peekNonWhitespace()
-		if toToken(string(ru)) == tCOMMA {
-			p.next() // consume comma
-		}
-	}
 	return
 }

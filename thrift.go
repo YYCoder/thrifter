@@ -17,6 +17,14 @@ func NewThrift(parent Node, FileName string) *Thrift {
 	}
 }
 
+func (r *Thrift) NodeType() string {
+	return "Thrift"
+}
+
+func (r *Thrift) NodeValue() interface{} {
+	return *r
+}
+
 func (r *Thrift) String() string {
 	return toString(r.StartToken, r.EndToken)
 }
@@ -46,6 +54,7 @@ func (r *Thrift) parse(p *Parser) (err error) {
 		if err = r.parse(p); err != nil {
 			return
 		}
+	case tok.Type == tSENUM:
 	case tok.Type == tENUM:
 		node := NewEnum(tok, r)
 		if err = node.parse(p); err != nil {
