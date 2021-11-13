@@ -106,17 +106,6 @@ func TestNamespace_withMultipleOptions(t *testing.T) {
 	}
 }
 
-func TestNamespace_withExtraComma(t *testing.T) {
-	parser := newParserOn(`namespace * b.a.c (a = 'a/b/c', b="4565a", )`)
-	parser.next() // consume keyword token [namespace] first
-	n := NewNamespace(nil, nil)
-	err := n.parse(parser)
-	// expect an error
-	if err == nil {
-		t.Error(err)
-	}
-}
-
 func TestNamespace_toString(t *testing.T) {
 	src := `namespace * b.a.c (a = 'a/b/c', b="4565a")`
 	parser := newParserOn(src)

@@ -17,6 +17,7 @@ type FieldType struct {
 	Map      *MapType
 	List     *ListType
 	Set      *SetType
+	Options  []*Option
 }
 
 func NewFieldType(parent Node) *FieldType {
@@ -64,6 +65,56 @@ func (r *FieldType) parse(p *Parser) (err error) {
 		r.Type = FIELD_TYPE_IDENT
 		r.Ident = fullLit
 		r.EndToken = endTok
+	}
+
+	// parse options
+	// list type may save token to buffer, since it need to scan next cpp_type token
+	if p.buf != nil {
+		tok := p.buf
+		p.buf = nil
+		if tok.Type != tLEFTPAREN {
+			return
+		}
+		r.Options, err = r.parseOptions(p)
+		if err != nil {
+			return err
+		}
+	} else {
+		ru := p.peekNonWhitespace()
+		if toToken(string(ru)) != tLEFTPAREN {
+			return
+		}
+		p.next() // consume (
+		r.Options, err = r.parseOptions(p)
+		if err != nil {
+			return err
+		}
+	}
+
+	return
+}
+
+func (r *FieldType) parseOptions(p *Parser) (res []*Option, err error) {
+	res = []*Option{}
+	var currOption *Option
+	for {
+		ru := p.peekNonWhitespace()
+		if toToken(string(ru)) == tRIGHTPAREN {
+			r.EndToken = p.next()
+			break
+		}
+
+		currOption = NewOption(r)
+		err = currOption.parse(p)
+		if err != nil {
+			return
+		}
+		res = append(res, currOption)
+
+		ru = p.peekNonWhitespace()
+		if toToken(string(ru)) == tCOMMA {
+			p.next() // consume comma
+		}
 	}
 	return
 }

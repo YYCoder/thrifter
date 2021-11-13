@@ -66,6 +66,7 @@ func (r *MapType) parseKeyAndValue(p *Parser) (err error) {
 	if err = r.Value.parse(p); err != nil {
 		return
 	}
+	p.peekNonWhitespace()
 	tok := p.next()
 	if tok.Type != tGREATER {
 		err = p.unexpected(tok.Value, ">")

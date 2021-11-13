@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 	"text/scanner"
 )
 
-func NewParser(rd io.Reader) *Parser {
+func NewParser(rd io.Reader, debug bool) *Parser {
 	s := new(scanner.Scanner)
 	s.Init(rd)
 	s.Whitespace ^= 1<<'\t' | 1<<'\n' | 1<<'\r' | 1<<' ' // do not filter tab/lineBreak/return/space, since we want to be non-destructive
@@ -18,12 +19,12 @@ func NewParser(rd io.Reader) *Parser {
 		// scanner.ScanStrings |
 		// scanner.ScanComments |
 		scanner.ScanRawStrings
-	res := &Parser{scanner: s}
 	// Scan error callback
 	s.Error = func(s *scanner.Scanner, msg string) {
 		fmt.Printf("Scan error: %v\n", msg)
 		os.Exit(1)
 	}
+	res := &Parser{scanner: s, debug: debug}
 	return res
 }
 
@@ -35,15 +36,15 @@ type Parser struct {
 }
 
 // parse a thrift file
-func (p *Parser) Parse() (res *Thrift, err error) {
-	res = NewThrift(nil, nil)
+func (p *Parser) Parse(fileName string) (res *Thrift, err error) {
+	res = NewThrift(nil, fileName)
 	err = res.parse(p)
 	return
 }
 
 // build token linked-list, and return consumed token
 func (p *Parser) next() (res *Token) {
-	// if buffer containers a token, consume buffer first
+	// if buffer contains a token, consume buffer first
 	if p.buf != nil {
 		res = p.buf
 		p.buf = nil
@@ -119,16 +120,23 @@ func (p *Parser) nextComment(commentType int) (res *Token, err error) {
 			}
 			break
 		}
-		p.scanner.Next() // consume next token
-		if (r == '\n' || r == '\r') && (commentType == BASH_LIKE_COMMENT || commentType == SINGLE_LINE_COMMENT) {
-			break
-		}
-		if commentType == MULTI_LINE_COMMENT && r == '*' {
-			nextRune := p.peek()
-			if nextRune == '/' {
-				p.scanner.Next() // consume next token
-				fullLit += "*/"
+		if commentType == BASH_LIKE_COMMENT || commentType == SINGLE_LINE_COMMENT {
+			if r == '\n' || r == '\r' {
 				break
+			} else {
+				p.scanner.Next() // consume next token
+			}
+		} else if commentType == MULTI_LINE_COMMENT {
+			if r == '*' {
+				p.scanner.Next() // consume next token
+				nextRune := p.peek()
+				if nextRune == '/' {
+					p.scanner.Next() // consume next token
+					fullLit += "*/"
+					break
+				}
+			} else {
+				p.scanner.Next() // consume next token
 			}
 		}
 		fullLit += string(r)
@@ -150,30 +158,32 @@ func (p *Parser) nextComment(commentType int) (res *Token, err error) {
 // 2. If keywordAllowed == true, it will allow keyword inside an identifier, e.g. enum.aaa.struct. In this case, the token for keyword will be replace to tIDENT, since the meaning for it is no more a keyword.
 // 3. For dot-separated identifier, it will automatically connected to a single string.
 func (p *Parser) nextIdent(keywordAllowed bool) (res string, startToken *Token, endToken *Token) {
+	var fullLit string
+	var skipDot bool
 	// if buffer containers a token, consume buffer first
 	if p.buf != nil && p.buf.Type == tIDENT {
-		res = p.buf.Value
+		startToken, endToken = p.buf, p.buf
+		fullLit = p.buf.Value
 		p.buf = nil
-		return
-	}
-
-	t := p.nextNonWhitespace()
-	tok, lit := t.Type, t.Value
-	if tIDENT != tok && tDOT != tok {
-		// can be keyword, change its token.Type
-		if isKeyword(tok) && keywordAllowed {
-			t.Type = tIDENT
-		} else {
-			return
+	} else {
+		t := p.nextNonWhitespace()
+		tok, lit := t.Type, t.Value
+		if tIDENT != tok && tDOT != tok {
+			// can be keyword, change its token.Type
+			if isKeyword(tok) && keywordAllowed {
+				t.Type = tIDENT
+			} else {
+				return
+			}
+			// proceed with keyword as first literal
 		}
-		// proceed with keyword as first literal
-	}
-	startToken, endToken = t, t
-	fullLit := lit
-	// if we have a leading dot, we need to skip dot handling in first iteration
-	skipDot := false
-	if t.Type == tDOT {
-		skipDot = true
+		startToken, endToken = t, t
+		fullLit = lit
+		// if we have a leading dot, we need to skip dot handling in first iteration
+		skipDot = false
+		if t.Type == tDOT {
+			skipDot = true
+		}
 	}
 
 	for {
@@ -182,7 +192,6 @@ func (p *Parser) nextIdent(keywordAllowed bool) (res string, startToken *Token, 
 			fullLit = ""
 		} else {
 			r := p.peek()
-			// TODO: support identifier with underscore
 			if '.' != r {
 				break
 			}
@@ -208,10 +217,35 @@ func (p *Parser) peek() rune {
 	return p.scanner.Peek()
 }
 
-// Scan next Unicode character, consumes white spaces and first non-whitespaces character.
+// Scan next Unicode character, consumes white spaces, comments and first non-whitespaces token.
 func (p *Parser) nextNonWhitespace() (res *Token) {
 	r := p.peek()
-	if isWhitespace(toToken(string(r))) {
+
+	// see if it's a comment
+	if string(r) == "/" {
+		p.scanner.Next() // consume comment first unicode character
+		isComment, commentType := p.isComment(r)
+		if isComment {
+			var err error
+			tok, err := p.nextComment(commentType)
+			if err != nil {
+				fmt.Printf("Scan error: %v\n", err.Error())
+				os.Exit(1)
+			}
+			p.chainToken(tok)
+			return p.nextNonWhitespace()
+		} else {
+			tok := &Token{
+				Type:  tIDENT,
+				Raw:   string(r),
+				Value: string(r),
+				Prev:  p.currToken,
+				Pos:   p.scanner.Position,
+			}
+			p.chainToken(tok)
+			return tok
+		}
+	} else if isWhitespace(toToken(string(r))) {
 		r = p.scanner.Next() // consume whitespaces
 		tok := &Token{
 			Type:  toToken(string(r)),
@@ -229,7 +263,24 @@ func (p *Parser) nextNonWhitespace() (res *Token) {
 // Scan next Unicode character, only consume white spaces, will not consume first non-whitespaces character.
 func (p *Parser) peekNonWhitespace() (r rune) {
 	r = p.peek()
-	if isWhitespace(toToken(string(r))) {
+
+	// see if it's a comment
+	if string(r) == "/" {
+		p.scanner.Next() // consume comment first unicode character
+		isComment, commentType := p.isComment(r)
+		if isComment {
+			var err error
+			tok, err := p.nextComment(commentType)
+			if err != nil {
+				fmt.Printf("Scan error: %v\n", err.Error())
+				os.Exit(1)
+			}
+			p.chainToken(tok)
+			return p.peekNonWhitespace()
+		} else {
+			return r
+		}
+	} else if isWhitespace(toToken(string(r))) {
 		r = p.scanner.Next() // consume whitespaces
 		tok := &Token{
 			Type:  toToken(string(r)),
@@ -342,5 +393,10 @@ func (p *Parser) chainToken(tok *Token) {
 }
 
 func (p *Parser) unexpected(found, expected string) error {
-	return fmt.Errorf("%v: found %q but expected [%s]", p.scanner.Position, found, expected)
+	var debug string
+	if p.debug {
+		_, file, line, _ := runtime.Caller(1)
+		debug = fmt.Sprintf(" at %s:%d", file, line)
+	}
+	return fmt.Errorf("%v: found %q but expected [%s], debug info %s", p.scanner.Position, found, expected, debug)
 }

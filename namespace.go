@@ -24,35 +24,33 @@ func (r *Namespace) parse(p *Parser) (err error) {
 	r.Name, _, _ = p.nextIdent(true)
 	var endIdent *Token
 	r.Value, _, endIdent = p.nextIdent(true)
-	tok := p.nextNonWhitespace()
-	if tok.Type != tLEFTPAREN {
-		p.buf = tok
+	ru := p.peekNonWhitespace()
+	if toToken(string(ru)) != tLEFTPAREN {
 		r.EndToken = endIdent
 		return
 	}
+	p.next() // consume (
 
 	r.Options = []*Option{}
 	var currOption *Option
 	for {
+		ru := p.peekNonWhitespace()
+		if toToken(string(ru)) == tRIGHTPAREN {
+			r.EndToken = p.next()
+			break
+		}
+
 		currOption = NewOption(r)
 		err = currOption.parse(p)
 		if err != nil {
-			return err
+			return
 		}
 		r.Options = append(r.Options, currOption)
 
-		tok = p.nextNonWhitespace()
-		if tok.Type == tRIGHTPAREN {
-			r.EndToken = tok
-			break
+		ru = p.peekNonWhitespace()
+		if toToken(string(ru)) == tCOMMA {
+			p.next() // consume comma
 		}
-		// there are more options
-		if tok.Type == tCOMMA {
-			continue
-		}
-		// neither a comma nor a ), throw an error
-		err = p.unexpected(tok.Value, ", or )")
-		return err
 	}
 	return
 }

@@ -6,7 +6,7 @@ import (
 )
 
 func newParserOn(def string) *Parser {
-	p := NewParser(strings.NewReader(def))
+	p := NewParser(strings.NewReader(def), true)
 	return p
 }
 

@@ -8,12 +8,12 @@ type Thrift struct {
 	Nodes []Node
 }
 
-func NewThrift(start *Token, parent Node) *Thrift {
+func NewThrift(parent Node, FileName string) *Thrift {
 	return &Thrift{
 		NodeCommonField: NodeCommonField{
-			Parent:     parent,
-			StartToken: start,
+			Parent: parent,
 		},
+		FileName: FileName,
 	}
 }
 
@@ -38,29 +38,68 @@ func (r *Thrift) parse(p *Parser) (err error) {
 			return
 		}
 	case tok.Type == tNAMESPACE:
-		namespace := NewNamespace(tok, r)
-		if err = namespace.parse(p); err != nil {
+		node := NewNamespace(tok, r)
+		if err = node.parse(p); err != nil {
 			return
 		}
-		r.Nodes = append(r.Nodes, namespace)
+		r.Nodes = append(r.Nodes, node)
+		if err = r.parse(p); err != nil {
+			return
+		}
 	case tok.Type == tENUM:
+		node := NewEnum(tok, r)
+		if err = node.parse(p); err != nil {
+			return
+		}
+		r.Nodes = append(r.Nodes, node)
+		if err = r.parse(p); err != nil {
+			return
+		}
 	case tok.Type == tCONST:
-		cst := NewConst(tok, r)
-		if err = cst.parse(p); err != nil {
+		node := NewConst(tok, r)
+		if err = node.parse(p); err != nil {
 			return
 		}
-		r.Nodes = append(r.Nodes, cst)
+		r.Nodes = append(r.Nodes, node)
+		if err = r.parse(p); err != nil {
+			return
+		}
 	case tok.Type == tSERVICE:
-	case tok.Type == tSTRUCT:
-	case tok.Type == tINCLUDE:
-	case tok.Type == tTYPEDEF:
-		td := NewTypeDef(tok, r)
-		if err = td.parse(p); err != nil {
+		node := NewService(tok, r)
+		if err = node.parse(p); err != nil {
 			return
 		}
-		r.Nodes = append(r.Nodes, td)
-	case tok.Type == tUNION:
-	case tok.Type == tEXCEPTION:
+		r.Nodes = append(r.Nodes, node)
+		if err = r.parse(p); err != nil {
+			return
+		}
+	case tok.Type == tSTRUCT, tok.Type == tEXCEPTION, tok.Type == tUNION:
+		node := NewStruct(tok, r)
+		if err = node.parse(p); err != nil {
+			return
+		}
+		r.Nodes = append(r.Nodes, node)
+		if err = r.parse(p); err != nil {
+			return
+		}
+	case tok.Type == tINCLUDE, tok.Type == tCPP_INCLUDE:
+		node := NewInclude(tok, r)
+		if err = node.parse(p); err != nil {
+			return
+		}
+		r.Nodes = append(r.Nodes, node)
+		if err = r.parse(p); err != nil {
+			return
+		}
+	case tok.Type == tTYPEDEF:
+		node := NewTypeDef(tok, r)
+		if err = node.parse(p); err != nil {
+			return
+		}
+		r.Nodes = append(r.Nodes, node)
+		if err = r.parse(p); err != nil {
+			return
+		}
 	case tok.Type == tEOF:
 		r.EndToken = tok
 		return

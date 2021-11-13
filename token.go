@@ -61,6 +61,7 @@ const (
 	tSERVICE
 	tSTRUCT
 	tINCLUDE
+	tCPP_INCLUDE
 	tTYPEDEF
 	tUNION
 	tEXCEPTION
@@ -141,6 +142,8 @@ func toToken(literal string) token {
 		return tSTRUCT
 	case "include":
 		return tINCLUDE
+	case "cpp_include":
+		return tCPP_INCLUDE
 	case "typedef":
 		return tTYPEDEF
 	case "union":

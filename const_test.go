@@ -96,7 +96,7 @@ func TestConst_mapWithIdent(t *testing.T) {
 	if got, want := constNode.Type.Map.Value.Type, FIELD_TYPE_IDENT; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
-	if got, want := constNode.Type.Map.Value.BaseType, "abc.def"; got != want {
+	if got, want := constNode.Type.Map.Value.Ident, "abc.def"; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 	if got, want := constNode.Ident, "test"; got != want {
