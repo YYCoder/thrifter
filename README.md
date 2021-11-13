@@ -1,2 +1,4 @@
 # thrifter
-Thrift parser written in golang which preserve all the formats.
+Non-destructive parser for thrift idl.
+
+[中文文档](./docs/cn.md)
