@@ -1,6 +1,9 @@
-version: 2
+version: 2.1
 
-jobs: # basic units of work in a run
+orbs:
+  codecov: codecov/codecov@3.2.2
+
+jobs:
   test-coverage:
     docker: # run the steps with Docker
       # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
@@ -22,6 +25,8 @@ jobs: # basic units of work in a run
             mv coverage.html /tmp/artifacts
       - store_artifacts:
           path: /tmp/artifacts
+      - codecov/upload:
+          file: ./c.out
 
   unit-test:
     docker: # run the steps with Docker
@@ -60,3 +65,4 @@ workflows:
     jobs:
       - unit-test
       - test-coverage
+
