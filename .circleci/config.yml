@@ -1,7 +1,7 @@
 version: 2
 
 jobs: # basic units of work in a run
-  unit-test:
+  test-coverage:
     docker: # run the steps with Docker
       # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
       - image: circleci/golang:1.16
@@ -23,7 +23,7 @@ jobs: # basic units of work in a run
       - store_artifacts:
           path: /tmp/artifacts
 
-  test-coverage:
+  unit-test:
     docker: # run the steps with Docker
       # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
       - image: circleci/golang:1.16
@@ -48,6 +48,9 @@ jobs: # basic units of work in a run
             PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
             gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
 
+      - store_artifacts: # upload test summary for display in Artifacts
+          path: /tmp/test-results
+          destination: raw-test-output
       - store_test_results: # upload test results for display in Test Summary
           path: /tmp/test-results
 
