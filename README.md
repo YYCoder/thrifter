@@ -1,7 +1,9 @@
 # thrifter
 Non-destructive parser for [thrift](https://thrift.apache.org/docs/types.html) with zero third-party dependency.
 
+[![YYCoder](https://circleci.com/gh/YYCoder/thrifter.svg?style=svg)](https://app.circleci.com/pipelines/github/YYCoder/thrifter)
 [![GoDoc](https://pkg.go.dev/badge/github.com/YYCoder/thrifter)](https://pkg.go.dev/github.com/YYCoder/thrifter)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
 
 [中文文档](./docs/cn.md)
@@ -25,3 +27,6 @@ Current parser implementation is not completely validating .thrift definitions.
 
 ## Related Packages
 on top of thrifer.
+
+## Contribution
+**Working on your first Pull Request?** You can learn how from this *free* series [How to Contribute to an Open Source Project on GitHub](https://kcd.im/pull-request).
