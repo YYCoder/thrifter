@@ -83,6 +83,7 @@ const (
 	keywordEnd
 )
 
+// Get corresponding token from string literal, mostly used for generate token.
 func GetToken(literal string) token {
 	return toToken(literal)
 }
