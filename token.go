@@ -83,6 +83,10 @@ const (
 	keywordEnd
 )
 
+func GetToken(literal string) token {
+	return toToken(literal)
+}
+
 func toToken(literal string) token {
 	switch literal {
 	// white space

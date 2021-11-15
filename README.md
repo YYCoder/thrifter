@@ -28,7 +28,15 @@ So, that's why I started thinking of writing a new thrift parser which preserves
 
 Thanks to [rocambole](https://github.com/millermedeiros/rocambole), behind which idea is perfect for this project.
 
+### Core Concept
+The main idea behind thrifter on achieve non-destructive is that, we use a linked-list to chain all tokens.
+
+Lets think of the essence of source code, it's just a chain of token, different token combination declare different syntax, so if we want to preserve original format, we must preserve all tokens from source code.
+
+The best data structure for this chain of tokens is linked-list, since it's easier to modify than array, we only need to change some pointer, and we can patch start token and end token to each meaningful ast node, so that we are able to easily iterate over tokens within a node.
+
 ## Usage
+Core
 
 ### AST Node
 
