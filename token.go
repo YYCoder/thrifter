@@ -21,65 +21,65 @@ func isBaseTypeToken(str string) bool {
 
 const (
 	// special tokens
-	tILLEGAL token = iota
-	tEOF
-	tIDENT
-	tSTRING // string literal
-	tNUMBER // integer or float
+	T_ILLEGAL token = iota
+	T_EOF
+	T_IDENT
+	T_STRING // string literal
+	T_NUMBER // integer or float
 
 	// white space
-	tSPACE
-	tLINEBREAK // \n
-	tRETURN    // \r
-	tTAB       // \t
+	T_SPACE
+	T_LINEBREAK // \n
+	T_RETURN    // \r
+	T_TAB       // \t
 
 	// punctuator
-	tSEMICOLON   // ;
-	tCOLON       // :
-	tEQUALS      // =
-	tQUOTE       // "
-	tSINGLEQUOTE // '
-	tLEFTPAREN   // (
-	tRIGHTPAREN  // )
-	tLEFTCURLY   // {
-	tRIGHTCURLY  // }
-	tLEFTSQUARE  // [
-	tRIGHTSQUARE // ]
-	tCOMMENT     // /
-	tLESS        // <
-	tGREATER     // >
-	tCOMMA       // ,
-	tDOT         // .
-	tPLUS        // +
-	tMINUS       // -
+	T_SEMICOLON   // ;
+	T_COLON       // :
+	T_EQUALS      // =
+	T_QUOTE       // "
+	T_SINGLEQUOTE // '
+	T_LEFTPAREN   // (
+	T_RIGHTPAREN  // )
+	T_LEFTCURLY   // {
+	T_RIGHTCURLY  // }
+	T_LEFTSQUARE  // [
+	T_RIGHTSQUARE // ]
+	T_COMMENT     // /
+	T_LESS        // <
+	T_GREATER     // >
+	T_COMMA       // ,
+	T_DOT         // .
+	T_PLUS        // +
+	T_MINUS       // -
 
 	// declaration keywords
 	keywordStart
-	tNAMESPACE
-	tENUM
-	tSENUM // currently not supported
-	tCONST
-	tSERVICE
-	tSTRUCT
-	tINCLUDE
-	tCPP_INCLUDE
-	tTYPEDEF
-	tUNION
-	tEXCEPTION
+	T_NAMESPACE
+	T_ENUM
+	T_SENUM // currently not supported
+	T_CONST
+	T_SERVICE
+	T_STRUCT
+	T_INCLUDE
+	T_CPP_INCLUDE
+	T_TYPEDEF
+	T_UNION
+	T_EXCEPTION
 
 	// field keywords
-	tOPTIONAL
-	tREQUIRED
+	T_OPTIONAL
+	T_REQUIRED
 
 	// type keywords
-	tMAP
-	tSET
-	tLIST
+	T_MAP
+	T_SET
+	T_LIST
 
 	// function keywords
-	tONEWAY
-	tVOID
-	tTHROWS
+	T_ONEWAY
+	T_VOID
+	T_THROWS
 	keywordEnd
 )
 
@@ -92,96 +92,96 @@ func toToken(literal string) token {
 	switch literal {
 	// white space
 	case "\n":
-		return tLINEBREAK
+		return T_LINEBREAK
 	case "\r":
-		return tRETURN
+		return T_RETURN
 	case " ":
-		return tSPACE
+		return T_SPACE
 	case "\t":
-		return tTAB
+		return T_TAB
 	// punctuator
 	case ";":
-		return tSEMICOLON
+		return T_SEMICOLON
 	case ":":
-		return tCOLON
+		return T_COLON
 	case "=":
-		return tEQUALS
+		return T_EQUALS
 	case "\"":
-		return tQUOTE
+		return T_QUOTE
 	case "'":
-		return tSINGLEQUOTE
+		return T_SINGLEQUOTE
 	case "(":
-		return tLEFTPAREN
+		return T_LEFTPAREN
 	case ")":
-		return tRIGHTPAREN
+		return T_RIGHTPAREN
 	case "{":
-		return tLEFTCURLY
+		return T_LEFTCURLY
 	case "}":
-		return tRIGHTCURLY
+		return T_RIGHTCURLY
 	case "[":
-		return tLEFTSQUARE
+		return T_LEFTSQUARE
 	case "]":
-		return tRIGHTSQUARE
+		return T_RIGHTSQUARE
 	case "<":
-		return tLESS
+		return T_LESS
 	case ">":
-		return tGREATER
+		return T_GREATER
 	case ",":
-		return tCOMMA
+		return T_COMMA
 	case ".":
-		return tDOT
+		return T_DOT
 	case "+":
-		return tPLUS
+		return T_PLUS
 	case "-":
-		return tMINUS
+		return T_MINUS
 
 	// declaration keywords
 	case "namespace":
-		return tNAMESPACE
+		return T_NAMESPACE
 	case "enum":
-		return tENUM
+		return T_ENUM
 	case "senum":
-		return tSENUM
+		return T_SENUM
 	case "const":
-		return tCONST
+		return T_CONST
 	case "service":
-		return tSERVICE
+		return T_SERVICE
 	case "struct":
-		return tSTRUCT
+		return T_STRUCT
 	case "include":
-		return tINCLUDE
+		return T_INCLUDE
 	case "cpp_include":
-		return tCPP_INCLUDE
+		return T_CPP_INCLUDE
 	case "typedef":
-		return tTYPEDEF
+		return T_TYPEDEF
 	case "union":
-		return tUNION
+		return T_UNION
 	case "exception":
-		return tEXCEPTION
+		return T_EXCEPTION
 
 	// field keywords
 	case "optional":
-		return tOPTIONAL
+		return T_OPTIONAL
 	case "required":
-		return tREQUIRED
+		return T_REQUIRED
 
 	// type keywords
 	case "map":
-		return tMAP
+		return T_MAP
 	case "set":
-		return tSET
+		return T_SET
 	case "list":
-		return tLIST
+		return T_LIST
 
 	// function keywords
 	case "oneway":
-		return tONEWAY
+		return T_ONEWAY
 	case "void":
-		return tVOID
+		return T_VOID
 	case "throws":
-		return tTHROWS
+		return T_THROWS
 	default:
-		return tIDENT
+		return T_IDENT
 	}
 }
 
@@ -193,12 +193,12 @@ const (
 )
 
 // isDigit returns true if the rune is a digit.
-func isDigit(lit rune) bool {
+func IsDigit(lit rune) bool {
 	return (lit >= '0' && lit <= '9')
 }
 
 // determine whether it is an integer or a float number
-func isNumber(str string) (isFloat bool, isInt bool) {
+func IsNumber(str string) (isFloat bool, isInt bool) {
 	isFloat, _ = regexp.MatchString("^\\d+\\.\\d+$", str)
 	isInt, _ = regexp.MatchString("^\\d+$", str)
 	return
@@ -218,12 +218,12 @@ func getCommentValue(raw string, commentType int) (res string) {
 }
 
 // isKeyword returns if tok is in the keywords range
-func isKeyword(tok token) bool {
+func IsKeyword(tok token) bool {
 	return keywordStart < tok && tok < keywordEnd
 }
 
-func isWhitespace(tok token) bool {
-	return tok == tSPACE || tok == tLINEBREAK || tok == tRETURN || tok == tTAB
+func IsWhitespace(tok token) bool {
+	return tok == T_SPACE || tok == T_LINEBREAK || tok == T_RETURN || tok == T_TAB
 }
 
 func toString(start *Token, end *Token) string {

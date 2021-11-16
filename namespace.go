@@ -33,7 +33,7 @@ func (r *Namespace) parse(p *Parser) (err error) {
 	var endIdent *Token
 	r.Value, _, endIdent = p.nextIdent(true)
 	ru := p.peekNonWhitespace()
-	if toToken(string(ru)) != tLEFTPAREN {
+	if toToken(string(ru)) != T_LEFTPAREN {
 		r.EndToken = endIdent
 		return
 	}

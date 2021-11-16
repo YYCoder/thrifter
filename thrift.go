@@ -37,15 +37,15 @@ func (r *Thrift) parse(p *Parser) (err error) {
 	}
 
 	switch {
-	case tok.Type == tCOMMENT ||
-		tok.Type == tSPACE ||
-		tok.Type == tLINEBREAK ||
-		tok.Type == tRETURN ||
-		tok.Type == tTAB:
+	case tok.Type == T_COMMENT ||
+		tok.Type == T_SPACE ||
+		tok.Type == T_LINEBREAK ||
+		tok.Type == T_RETURN ||
+		tok.Type == T_TAB:
 		if err = r.parse(p); err != nil {
 			return
 		}
-	case tok.Type == tNAMESPACE:
+	case tok.Type == T_NAMESPACE:
 		node := NewNamespace(tok, r)
 		if err = node.parse(p); err != nil {
 			return
@@ -54,8 +54,8 @@ func (r *Thrift) parse(p *Parser) (err error) {
 		if err = r.parse(p); err != nil {
 			return
 		}
-	case tok.Type == tSENUM:
-	case tok.Type == tENUM:
+	case tok.Type == T_SENUM:
+	case tok.Type == T_ENUM:
 		node := NewEnum(tok, r)
 		if err = node.parse(p); err != nil {
 			return
@@ -64,7 +64,7 @@ func (r *Thrift) parse(p *Parser) (err error) {
 		if err = r.parse(p); err != nil {
 			return
 		}
-	case tok.Type == tCONST:
+	case tok.Type == T_CONST:
 		node := NewConst(tok, r)
 		if err = node.parse(p); err != nil {
 			return
@@ -73,7 +73,7 @@ func (r *Thrift) parse(p *Parser) (err error) {
 		if err = r.parse(p); err != nil {
 			return
 		}
-	case tok.Type == tSERVICE:
+	case tok.Type == T_SERVICE:
 		node := NewService(tok, r)
 		if err = node.parse(p); err != nil {
 			return
@@ -82,7 +82,7 @@ func (r *Thrift) parse(p *Parser) (err error) {
 		if err = r.parse(p); err != nil {
 			return
 		}
-	case tok.Type == tSTRUCT, tok.Type == tEXCEPTION, tok.Type == tUNION:
+	case tok.Type == T_STRUCT, tok.Type == T_EXCEPTION, tok.Type == T_UNION:
 		node := NewStruct(tok, r)
 		if err = node.parse(p); err != nil {
 			return
@@ -91,7 +91,7 @@ func (r *Thrift) parse(p *Parser) (err error) {
 		if err = r.parse(p); err != nil {
 			return
 		}
-	case tok.Type == tINCLUDE, tok.Type == tCPP_INCLUDE:
+	case tok.Type == T_INCLUDE, tok.Type == T_CPP_INCLUDE:
 		node := NewInclude(tok, r)
 		if err = node.parse(p); err != nil {
 			return
@@ -100,7 +100,7 @@ func (r *Thrift) parse(p *Parser) (err error) {
 		if err = r.parse(p); err != nil {
 			return
 		}
-	case tok.Type == tTYPEDEF:
+	case tok.Type == T_TYPEDEF:
 		node := NewTypeDef(tok, r)
 		if err = node.parse(p); err != nil {
 			return
@@ -109,7 +109,7 @@ func (r *Thrift) parse(p *Parser) (err error) {
 		if err = r.parse(p); err != nil {
 			return
 		}
-	case tok.Type == tEOF:
+	case tok.Type == T_EOF:
 		r.EndToken = tok
 		return
 	default:

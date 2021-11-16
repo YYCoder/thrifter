@@ -44,7 +44,7 @@ func (r *TypeDef) parse(p *Parser) (err error) {
 
 	// parse options
 	ru := p.peekNonWhitespace()
-	if toToken(string(ru)) != tLEFTPAREN {
+	if toToken(string(ru)) != T_LEFTPAREN {
 		return
 	}
 	p.next() // consume (

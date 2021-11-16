@@ -78,7 +78,7 @@ func (r *FieldType) parse(p *Parser) (err error) {
 	// parse options
 	// list type may save token to buffer, since it need to scan next cpp_type token
 	if p.buf != nil {
-		if p.buf.Type != tLEFTPAREN {
+		if p.buf.Type != T_LEFTPAREN {
 			return
 		}
 		p.buf = nil
@@ -88,7 +88,7 @@ func (r *FieldType) parse(p *Parser) (err error) {
 		}
 	} else {
 		ru := p.peekNonWhitespace()
-		if toToken(string(ru)) != tLEFTPAREN {
+		if toToken(string(ru)) != T_LEFTPAREN {
 			return
 		}
 		p.next() // consume (

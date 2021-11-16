@@ -2,6 +2,7 @@
 **Non-destructive** parser for [thrift](https://thrift.apache.org/docs/types.html) with zero third-party dependency.
 
 [![YYCoder](https://circleci.com/gh/YYCoder/thrifter.svg?style=svg)](https://app.circleci.com/pipelines/github/YYCoder/thrifter)
+[![goreportcard](https://goreportcard.com/badge/github.com/yycoder/thrifter)](https://goreportcard.com/report/github.com/yycoder/thrifter)
 [![GoDoc](https://pkg.go.dev/badge/github.com/YYCoder/thrifter)](https://pkg.go.dev/github.com/YYCoder/thrifter)
 [![Codecov](https://codecov.io/gh/YYCoder/thrifter/branch/master/graph/badge.svg)](https://codecov.io/gh/YYCoder/thrifter)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)

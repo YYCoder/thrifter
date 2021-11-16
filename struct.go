@@ -58,14 +58,14 @@ func (r *Struct) parse(p *Parser) (err error) {
 	fullLit, _, _ := p.nextIdent(false)
 	r.Ident = fullLit
 	ru := p.peekNonWhitespace()
-	if toToken(string(ru)) != tLEFTCURLY {
+	if toToken(string(ru)) != T_LEFTCURLY {
 		return p.unexpected(string(ru), "{")
 	}
 	p.next() // consume {
 	var rightParenTok *Token
 	for {
 		ru := p.peekNonWhitespace()
-		if toToken(string(ru)) == tRIGHTCURLY {
+		if toToken(string(ru)) == T_RIGHTCURLY {
 			rightParenTok = p.next()
 			break
 		}
@@ -78,7 +78,7 @@ func (r *Struct) parse(p *Parser) (err error) {
 
 	// parse options
 	ru = p.peekNonWhitespace()
-	if toToken(string(ru)) != tLEFTPAREN {
+	if toToken(string(ru)) != T_LEFTPAREN {
 		r.EndToken = rightParenTok
 		return
 	}

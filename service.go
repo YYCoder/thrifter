@@ -34,14 +34,14 @@ func (r *Service) parse(p *Parser) (err error) {
 	fullLit, _, _ := p.nextIdent(false)
 	r.Ident = fullLit
 	tok := p.nextNonWhitespace()
-	if tok.Type == tLEFTCURLY {
+	if tok.Type == T_LEFTCURLY {
 		r.Elems, err = r.parseFunctions(p)
 		if err != nil {
 			return err
 		}
 		// parse options
 		ru := p.peekNonWhitespace()
-		if toToken(string(ru)) != tLEFTPAREN {
+		if toToken(string(ru)) != T_LEFTPAREN {
 			return
 		}
 		p.next() // consume (
@@ -53,7 +53,7 @@ func (r *Service) parse(p *Parser) (err error) {
 		fullLit, _, _ := p.nextIdent(false)
 		r.Extends = fullLit
 		tok := p.nextNonWhitespace()
-		if tok.Type == tLEFTCURLY {
+		if tok.Type == T_LEFTCURLY {
 			r.Elems, err = r.parseFunctions(p)
 			if err != nil {
 				return err
@@ -69,13 +69,13 @@ func (r *Service) parse(p *Parser) (err error) {
 
 func (r *Service) parseFunctions(p *Parser) (funcs []*Function, err error) {
 	for {
-		if p.buf != nil && p.buf.Type == tRIGHTCURLY {
+		if p.buf != nil && p.buf.Type == T_RIGHTCURLY {
 			r.EndToken = p.buf
 			p.buf = nil
 			break
 		}
 		ru := p.peekNonWhitespace()
-		if toToken(string(ru)) == tRIGHTCURLY {
+		if toToken(string(ru)) == T_RIGHTCURLY {
 			r.EndToken = p.next()
 			break
 		}
@@ -159,7 +159,7 @@ func (r *Function) parse(p *Parser) (err error) {
 
 	// parse options
 	ru := p.peekNonWhitespace()
-	if toToken(string(ru)) == tLEFTPAREN {
+	if toToken(string(ru)) == T_LEFTPAREN {
 		r.Options, rightParenTok, err = r.parseOptions(p)
 		if err != nil {
 			return err
@@ -168,19 +168,19 @@ func (r *Function) parse(p *Parser) (err error) {
 
 	// parse throws
 	tok := p.nextNonWhitespace()
-	if tok.Type == tTHROWS {
+	if tok.Type == T_THROWS {
 		r.Args, rightParenTok, err = r.parseFields(p)
 		if err != nil {
 			return err
 		}
 		tok := p.nextNonWhitespace()
-		if tok.Type == tCOMMA || tok.Type == tSEMICOLON {
+		if tok.Type == T_COMMA || tok.Type == T_SEMICOLON {
 			r.EndToken = tok
 		} else {
 			p.buf = tok
 			r.EndToken = rightParenTok
 		}
-	} else if tok.Type == tCOMMA || tok.Type == tSEMICOLON {
+	} else if tok.Type == T_COMMA || tok.Type == T_SEMICOLON {
 		r.EndToken = tok
 	} else {
 		p.buf = tok
@@ -193,7 +193,7 @@ func (r *Function) parseOptions(p *Parser) (res []*Option, rightParenTok *Token,
 	p.next() // consume (
 	for {
 		ru := p.peekNonWhitespace()
-		if toToken(string(ru)) == tRIGHTPAREN {
+		if toToken(string(ru)) == T_RIGHTPAREN {
 			rightParenTok = p.next()
 			break
 		}
@@ -204,7 +204,7 @@ func (r *Function) parseOptions(p *Parser) (res []*Option, rightParenTok *Token,
 		res = append(res, elem)
 
 		ru = p.peekNonWhitespace()
-		if toToken(string(ru)) == tCOMMA {
+		if toToken(string(ru)) == T_COMMA {
 			p.next() // consume comma
 		}
 	}
@@ -213,13 +213,13 @@ func (r *Function) parseOptions(p *Parser) (res []*Option, rightParenTok *Token,
 
 func (r *Function) parseFields(p *Parser) (fields []*Field, rightParenTok *Token, err error) {
 	ru := p.peekNonWhitespace()
-	if toToken(string(ru)) != tLEFTPAREN {
+	if toToken(string(ru)) != T_LEFTPAREN {
 		return nil, nil, p.unexpected(string(ru), "(")
 	}
 	p.next() // consume (
 	for {
 		ru := p.peekNonWhitespace()
-		if toToken(string(ru)) == tRIGHTPAREN {
+		if toToken(string(ru)) == T_RIGHTPAREN {
 			rightParenTok = p.next()
 			break
 		}

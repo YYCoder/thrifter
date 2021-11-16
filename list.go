@@ -30,7 +30,7 @@ func (r *ListType) String() string {
 func (r *ListType) parse(p *Parser) (err error) {
 	p.peekNonWhitespace()
 	tok := p.next()
-	if tok.Type != tLESS {
+	if tok.Type != T_LESS {
 		return p.unexpected(tok.Value, "<")
 	}
 	if err = r.parseElem(p); err != nil {
@@ -46,13 +46,13 @@ func (r *ListType) parseElem(p *Parser) (err error) {
 	}
 	p.peekNonWhitespace()
 	greaterTok := p.next()
-	if greaterTok.Type != tGREATER {
+	if greaterTok.Type != T_GREATER {
 		err = p.unexpected(greaterTok.Value, ">")
 		return
 	}
 	p.peekNonWhitespace()
 	tok := p.next()
-	if tok.Type == tIDENT && tok.Value == "cpp_type" {
+	if tok.Type == T_IDENT && tok.Value == "cpp_type" {
 		p.peekNonWhitespace()
 		strTok, err := p.nextString()
 		if err != nil {

@@ -50,7 +50,7 @@ func (r *Field) parse(p *Parser) (err error) {
 	r.ID = int(id)
 	r.StartToken = idToken
 	ru := p.peekNonWhitespace()
-	if toToken(string(ru)) != tCOLON {
+	if toToken(string(ru)) != T_COLON {
 		return p.unexpected(string(ru), ":")
 	}
 	p.next() // consume :
@@ -77,7 +77,7 @@ func (r *Field) parse(p *Parser) (err error) {
 
 	// parse DefaultValue/Options
 	ru = p.peekNonWhitespace()
-	if toToken(string(ru)) == tEQUALS {
+	if toToken(string(ru)) == T_EQUALS {
 		p.next() // consume =
 		cst, err := r.parseDefaultValue(p)
 		if err != nil {
@@ -86,7 +86,7 @@ func (r *Field) parse(p *Parser) (err error) {
 		r.DefaultValue = cst
 		// see if there are options
 		ru := p.peekNonWhitespace()
-		if toToken(string(ru)) == tLEFTPAREN {
+		if toToken(string(ru)) == T_LEFTPAREN {
 			p.next() // consume (
 			var rightParenTok *Token
 			r.Options, rightParenTok, err = r.parseOptions(p)
@@ -101,7 +101,7 @@ func (r *Field) parse(p *Parser) (err error) {
 				return err
 			}
 		}
-	} else if toToken(string(ru)) == tLEFTPAREN {
+	} else if toToken(string(ru)) == T_LEFTPAREN {
 		p.next() // consume (
 		var rightParenTok *Token
 		r.Options, rightParenTok, err = r.parseOptions(p)
@@ -122,7 +122,7 @@ func (r *Field) parse(p *Parser) (err error) {
 
 func (r *Field) parseEnd(defaultEnd *Token, p *Parser) (err error) {
 	ru := p.peekNonWhitespace()
-	if toToken(string(ru)) == tCOMMA || toToken(string(ru)) == tSEMICOLON {
+	if toToken(string(ru)) == T_COMMA || toToken(string(ru)) == T_SEMICOLON {
 		r.EndToken = p.next()
 	} else {
 		r.EndToken = defaultEnd
@@ -143,7 +143,7 @@ func (r *Field) parseOptions(p *Parser) (options []*Option, rightParenTok *Token
 	var currOption *Option
 	for {
 		ru := p.peekNonWhitespace()
-		if toToken(string(ru)) == tRIGHTPAREN {
+		if toToken(string(ru)) == T_RIGHTPAREN {
 			rightParenTok = p.next()
 			break
 		}
@@ -156,7 +156,7 @@ func (r *Field) parseOptions(p *Parser) (options []*Option, rightParenTok *Token
 		options = append(options, currOption)
 
 		ru = p.peekNonWhitespace()
-		if toToken(string(ru)) == tCOMMA {
+		if toToken(string(ru)) == T_COMMA {
 			p.next() // consume comma
 		}
 	}

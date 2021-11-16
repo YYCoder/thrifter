@@ -54,7 +54,7 @@ func (p *Parser) next() (res *Token) {
 	t := s.Scan()
 	if t == scanner.EOF {
 		res = &Token{
-			Type: tEOF,
+			Type: T_EOF,
 			Prev: p.currToken,
 			Pos:  p.scanner.Position,
 		}
@@ -145,7 +145,7 @@ func (p *Parser) nextComment(commentType int) (res *Token, err error) {
 	res = &Token{
 		Value: getCommentValue(fullLit, commentType),
 		Raw:   fullLit,
-		Type:  tCOMMENT,
+		Type:  T_COMMENT,
 		Prev:  p.currToken,
 		Pos:   p.scanner.Position,
 	}
@@ -155,23 +155,23 @@ func (p *Parser) nextComment(commentType int) (res *Token, err error) {
 // TODO: concat dot-separated ident into one token
 // Find next identifier, it will consume white spaces during scanning.
 // 1. Allow leading && trailing dot.
-// 2. If keywordAllowed == true, it will allow keyword inside an identifier, e.g. enum.aaa.struct. In this case, the token for keyword will be replace to tIDENT, since the meaning for it is no more a keyword.
+// 2. If keywordAllowed == true, it will allow keyword inside an identifier, e.g. enum.aaa.struct. In this case, the token for keyword will be replace to T_IDENT, since the meaning for it is no more a keyword.
 // 3. For dot-separated identifier, it will automatically connected to a single string.
 func (p *Parser) nextIdent(keywordAllowed bool) (res string, startToken *Token, endToken *Token) {
 	var fullLit string
 	var skipDot bool
 	// if buffer containers a token, consume buffer first
-	if p.buf != nil && p.buf.Type == tIDENT {
+	if p.buf != nil && p.buf.Type == T_IDENT {
 		startToken, endToken = p.buf, p.buf
 		fullLit = p.buf.Value
 		p.buf = nil
 	} else {
 		t := p.nextNonWhitespace()
 		tok, lit := t.Type, t.Value
-		if tIDENT != tok && tDOT != tok {
+		if T_IDENT != tok && T_DOT != tok {
 			// can be keyword, change its token.Type
-			if isKeyword(tok) && keywordAllowed {
-				t.Type = tIDENT
+			if IsKeyword(tok) && keywordAllowed {
+				t.Type = T_IDENT
 			} else {
 				return
 			}
@@ -181,7 +181,7 @@ func (p *Parser) nextIdent(keywordAllowed bool) (res string, startToken *Token, 
 		fullLit = lit
 		// if we have a leading dot, we need to skip dot handling in first iteration
 		skipDot = false
-		if t.Type == tDOT {
+		if t.Type == T_DOT {
 			skipDot = true
 		}
 	}
@@ -199,10 +199,10 @@ func (p *Parser) nextIdent(keywordAllowed bool) (res string, startToken *Token, 
 		}
 		// scan next token, see if it's a identifier or keyword, if not, save it to p.buf until next p.next() calling
 		tok := p.next()
-		if isKeyword(tok.Type) && keywordAllowed {
-			tok.Type = tIDENT
+		if IsKeyword(tok.Type) && keywordAllowed {
+			tok.Type = T_IDENT
 		}
-		if tIDENT != tok.Type {
+		if T_IDENT != tok.Type {
 			fullLit = fmt.Sprintf("%s.", fullLit)
 			p.buf = tok
 			break
@@ -236,7 +236,7 @@ func (p *Parser) nextNonWhitespace() (res *Token) {
 			return p.nextNonWhitespace()
 		} else {
 			tok := &Token{
-				Type:  tIDENT,
+				Type:  T_IDENT,
 				Raw:   string(r),
 				Value: string(r),
 				Prev:  p.currToken,
@@ -245,7 +245,7 @@ func (p *Parser) nextNonWhitespace() (res *Token) {
 			p.chainToken(tok)
 			return tok
 		}
-	} else if isWhitespace(toToken(string(r))) {
+	} else if IsWhitespace(toToken(string(r))) {
 		r = p.scanner.Next() // consume whitespaces
 		tok := &Token{
 			Type:  toToken(string(r)),
@@ -280,7 +280,7 @@ func (p *Parser) peekNonWhitespace() (r rune) {
 		} else {
 			return r
 		}
-	} else if isWhitespace(toToken(string(r))) {
+	} else if IsWhitespace(toToken(string(r))) {
 		r = p.scanner.Next() // consume whitespaces
 		tok := &Token{
 			Type:  toToken(string(r)),
@@ -300,13 +300,13 @@ func (p *Parser) peekNonWhitespace() (r rune) {
 func (p *Parser) nextString() (res *Token, err error) {
 	r := p.scanner.Next()
 	tok := toToken(string(r))
-	if tok != tSINGLEQUOTE && tok != tQUOTE {
+	if tok != T_SINGLEQUOTE && tok != T_QUOTE {
 		err = p.unexpected(string(r), "single quote || quote")
 		return
 	}
 	quoteType := tok
 	var fullLit string
-	if quoteType == tSINGLEQUOTE {
+	if quoteType == T_SINGLEQUOTE {
 		fullLit = singleQuoteString
 	} else {
 		fullLit = quoteString
@@ -328,7 +328,7 @@ func (p *Parser) nextString() (res *Token, err error) {
 
 	val, _ := unQuote(fullLit)
 	res = &Token{
-		Type:  tSTRING,
+		Type:  T_STRING,
 		Raw:   fullLit,
 		Value: val,
 		Prev:  p.currToken,
@@ -342,34 +342,34 @@ func (p *Parser) nextString() (res *Token, err error) {
 func (p *Parser) nextNumber() (res *Token, err error, isFloat bool, isInt bool) {
 	var fullLit string
 	r := p.peekNonWhitespace()
-	if isDigit(r) {
+	if IsDigit(r) {
 		p.scanner.Scan()
 		fullLit = p.scanner.TokenText()
-		if isFloat, isInt = isNumber(fullLit); !isFloat && !isInt {
+		if isFloat, isInt = IsNumber(fullLit); !isFloat && !isInt {
 			err = p.unexpected("digit", fullLit)
 			return
 		}
 		res = &Token{
-			Type:  tNUMBER,
+			Type:  T_NUMBER,
 			Raw:   fullLit,
 			Value: fullLit,
 			Prev:  p.currToken,
 			Pos:   p.scanner.Position,
 		}
 		p.chainToken(res)
-	} else if toToken(string(r)) == tMINUS {
+	} else if toToken(string(r)) == T_MINUS {
 		p.scanner.Next() // consume minus symbol
 		fullLit = "-"
 		p.scanner.Scan()
 		num := p.scanner.TokenText()
-		if isFloat, isInt = isNumber(num); !isFloat && !isInt {
+		if isFloat, isInt = IsNumber(num); !isFloat && !isInt {
 			err = p.unexpected("digit", num)
 			return
 		} else {
 			fullLit += num
 		}
 		res = &Token{
-			Type:  tNUMBER,
+			Type:  T_NUMBER,
 			Raw:   fullLit,
 			Value: fullLit,
 			Prev:  p.currToken,

@@ -32,11 +32,11 @@ func (r *MapType) String() string {
 func (r *MapType) parse(p *Parser) (err error) {
 	p.peekNonWhitespace()
 	tok := p.next()
-	if tok.Type == tLESS {
+	if tok.Type == T_LESS {
 		if err = r.parseKeyAndValue(p); err != nil {
 			return
 		}
-	} else if tok.Type == tIDENT && tok.Value == "cpp_type" {
+	} else if tok.Type == T_IDENT && tok.Value == "cpp_type" {
 		p.peekNonWhitespace()
 		strTok, err := p.nextString()
 		if err != nil {
@@ -45,7 +45,7 @@ func (r *MapType) parse(p *Parser) (err error) {
 		r.CppType = strTok.Value
 		p.peekNonWhitespace()
 		tok := p.next()
-		if tok.Type != tLESS {
+		if tok.Type != T_LESS {
 			return p.unexpected(tok.Value, "<")
 		}
 		if err = r.parseKeyAndValue(p); err != nil {
@@ -64,7 +64,7 @@ func (r *MapType) parseKeyAndValue(p *Parser) (err error) {
 	}
 	ru := p.peekNonWhitespace()
 	commaTok := toToken(string(ru))
-	if commaTok != tCOMMA {
+	if commaTok != T_COMMA {
 		err = p.unexpected(string(ru), ",")
 		return
 	}
@@ -76,7 +76,7 @@ func (r *MapType) parseKeyAndValue(p *Parser) (err error) {
 	}
 	p.peekNonWhitespace()
 	tok := p.next()
-	if tok.Type != tGREATER {
+	if tok.Type != T_GREATER {
 		err = p.unexpected(tok.Value, ">")
 		return
 	}

@@ -30,11 +30,11 @@ func (r *SetType) String() string {
 func (r *SetType) parse(p *Parser) (err error) {
 	p.peekNonWhitespace()
 	tok := p.next()
-	if tok.Type == tLESS {
+	if tok.Type == T_LESS {
 		if err = r.parseElem(p); err != nil {
 			return
 		}
-	} else if tok.Type == tIDENT && tok.Value == "cpp_type" {
+	} else if tok.Type == T_IDENT && tok.Value == "cpp_type" {
 		p.peekNonWhitespace()
 		strTok, err := p.nextString()
 		if err != nil {
@@ -43,7 +43,7 @@ func (r *SetType) parse(p *Parser) (err error) {
 		r.CppType = strTok.Value
 		p.peekNonWhitespace()
 		tok := p.next()
-		if tok.Type != tLESS {
+		if tok.Type != T_LESS {
 			return p.unexpected(tok.Value, "<")
 		}
 		if err = r.parseElem(p); err != nil {
@@ -61,7 +61,7 @@ func (r *SetType) parseElem(p *Parser) (err error) {
 		return
 	}
 	tok := p.next()
-	if tok.Type != tGREATER {
+	if tok.Type != T_GREATER {
 		err = p.unexpected(tok.Value, ">")
 		return
 	}

@@ -47,16 +47,16 @@ func (r *Const) parse(p *Parser) (err error) {
 	ident, _, _ := p.nextIdent(false)
 	r.Ident = ident
 	ru := p.peekNonWhitespace()
-	if toToken(string(ru)) != tEQUALS {
+	if toToken(string(ru)) != T_EQUALS {
 		return p.unexpected(string(ru), "=")
 	}
-	p.next() // consume tEQUALS
+	p.next() // consume T_EQUALS
 	r.Value = NewConstValue(r)
 	if err = r.Value.parse(p); err != nil {
 		return
 	}
 	ru = p.peekNonWhitespace()
-	if toToken(string(ru)) == tCOMMA || toToken(string(ru)) == tSEMICOLON {
+	if toToken(string(ru)) == T_COMMA || toToken(string(ru)) == T_SEMICOLON {
 		r.EndToken = p.next() // consume comma or semicolon
 	} else {
 		r.EndToken = r.Value.EndToken
@@ -98,7 +98,7 @@ func (r *ConstValue) parse(p *Parser) (err error) {
 	tok := toToken(string(ru))
 
 	// if it's minus symbol or a digit
-	if tok == tMINUS || isDigit(ru) {
+	if tok == T_MINUS || IsDigit(ru) {
 		numberTok, err, isFloat, isInt := p.nextNumber()
 		if err != nil {
 			return err
@@ -120,7 +120,7 @@ func (r *ConstValue) parse(p *Parser) (err error) {
 		r.StartToken = strTok
 		r.EndToken = strTok
 		r.Value = strTok.Raw
-	} else if tok == tLEFTSQUARE {
+	} else if tok == T_LEFTSQUARE {
 		leftSquareTok := p.next()
 		r.Type = CONST_VALUE_LIST
 		r.StartToken = leftSquareTok
@@ -130,7 +130,7 @@ func (r *ConstValue) parse(p *Parser) (err error) {
 			return err
 		}
 		r.EndToken = r.List.EndToken
-	} else if tok == tLEFTCURLY {
+	} else if tok == T_LEFTCURLY {
 		leftCurlyTok := p.next()
 		r.Type = CONST_VALUE_MAP
 		r.StartToken = leftCurlyTok
@@ -142,7 +142,7 @@ func (r *ConstValue) parse(p *Parser) (err error) {
 		r.EndToken = r.Map.EndToken
 	} else {
 		fullLit, startTok, endTok := p.nextIdent(false)
-		if startTok.Type != tIDENT || endTok.Type != tIDENT {
+		if startTok.Type != T_IDENT || endTok.Type != T_IDENT {
 			return p.unexpected("identifier", fullLit)
 		}
 		r.Type = CONST_VALUE_IDENT
@@ -189,7 +189,7 @@ func (r *ConstMap) parse(p *Parser) (err error) {
 	for {
 		ru := p.peekNonWhitespace() // consume white spaces
 		ruTok := toToken(string(ru))
-		if ruTok == tRIGHTCURLY {
+		if ruTok == T_RIGHTCURLY {
 			r.EndToken = p.next() // consume right curly
 			break
 		}
@@ -200,10 +200,10 @@ func (r *ConstMap) parse(p *Parser) (err error) {
 			return err
 		}
 		ru = p.peekNonWhitespace() // consume white spaces
-		if toToken(string(ru)) != tCOLON {
+		if toToken(string(ru)) != T_COLON {
 			return p.unexpected(":", string(ru))
 		}
-		p.next()              // consume tCOLON
+		p.next()              // consume T_COLON
 		p.peekNonWhitespace() // consume white spaces
 		valNode := NewConstValue(r)
 		err = valNode.parse(p)
@@ -216,7 +216,7 @@ func (r *ConstMap) parse(p *Parser) (err error) {
 
 		ru = p.peekNonWhitespace() // consume white spaces
 		ruTok = toToken(string(ru))
-		if ruTok == tCOMMA || ruTok == tSEMICOLON {
+		if ruTok == T_COMMA || ruTok == T_SEMICOLON {
 			p.next() // consume separator
 		}
 
@@ -256,7 +256,7 @@ func (r *ConstList) parse(p *Parser) (err error) {
 		ru := p.peekNonWhitespace()
 		nextTok := toToken(string(ru))
 		// const list end
-		if nextTok == tRIGHTSQUARE {
+		if nextTok == T_RIGHTSQUARE {
 			r.EndToken = p.next() // consume right square
 			break
 		}
@@ -268,7 +268,7 @@ func (r *ConstList) parse(p *Parser) (err error) {
 		r.Elems = append(r.Elems, valNode)
 		ru = p.peekNonWhitespace()
 		nextTok = toToken(string(ru))
-		if nextTok == tCOMMA || nextTok == tSEMICOLON {
+		if nextTok == T_COMMA || nextTok == T_SEMICOLON {
 			p.next() // consume list separator
 		}
 	}

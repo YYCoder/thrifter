@@ -35,13 +35,13 @@ func (r *Enum) parse(p *Parser) (err error) {
 	fullLit, _, _ := p.nextIdent(false)
 	r.Ident = fullLit
 	ru := p.peekNonWhitespace()
-	if toToken(string(ru)) != tLEFTCURLY {
+	if toToken(string(ru)) != T_LEFTCURLY {
 		return p.unexpected(string(ru), "{")
 	}
 	p.next() // consume {
 	for {
 		ru := p.peekNonWhitespace()
-		if toToken(string(ru)) == tRIGHTCURLY {
+		if toToken(string(ru)) == T_RIGHTCURLY {
 			r.EndToken = p.next()
 			break
 		}
@@ -54,7 +54,7 @@ func (r *Enum) parse(p *Parser) (err error) {
 
 	// parse options
 	ru = p.peekNonWhitespace()
-	if toToken(string(ru)) != tLEFTPAREN {
+	if toToken(string(ru)) != T_LEFTPAREN {
 		return
 	}
 	p.next() // consume (
@@ -99,10 +99,10 @@ func (r *EnumElement) parse(p *Parser) (err error) {
 	r.Ident = fullLit
 	ru := p.peekNonWhitespace()
 	// if there is no = after enum field identifier, then directly parse EndToken
-	if toToken(string(ru)) != tEQUALS {
+	if toToken(string(ru)) != T_EQUALS {
 		// parse options
 		ru = p.peekNonWhitespace()
-		if toToken(string(ru)) != tLEFTPAREN {
+		if toToken(string(ru)) != T_LEFTPAREN {
 			r.EndToken = endTok
 			// parse separator
 			if err = r.parseSeparator(p); err != nil {
@@ -139,7 +139,7 @@ func (r *EnumElement) parse(p *Parser) (err error) {
 
 	// parse options
 	ru = p.peekNonWhitespace()
-	if toToken(string(ru)) != tLEFTPAREN {
+	if toToken(string(ru)) != T_LEFTPAREN {
 		r.EndToken = tok
 		// parse separator
 		if err = r.parseSeparator(p); err != nil {
@@ -163,7 +163,7 @@ func (r *EnumElement) parse(p *Parser) (err error) {
 
 func (r *EnumElement) parseSeparator(p *Parser) (err error) {
 	ru := p.peekNonWhitespace()
-	if toToken(string(ru)) == tCOMMA || toToken(string(ru)) == tSEMICOLON {
+	if toToken(string(ru)) == T_COMMA || toToken(string(ru)) == T_SEMICOLON {
 		r.EndToken = p.next()
 	}
 	return

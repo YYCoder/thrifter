@@ -30,12 +30,12 @@ func (r *Option) String() string {
 func (r *Option) parse(p *Parser) (err error) {
 	// can't use keyword as option name
 	name, start, _ := p.nextIdent(false)
-	if start == nil || start.Type != tIDENT {
+	if start == nil || start.Type != T_IDENT {
 		return p.unexpected(name, "identifier")
 	}
 	// if there is no = token
 	tok := p.nextNonWhitespace()
-	if tok.Type != tEQUALS {
+	if tok.Type != T_EQUALS {
 		return
 	}
 	// find next string
@@ -67,7 +67,7 @@ func parseOptions(p *Parser, parent Node) (res []*Option, rightParenTok *Token, 
 	var currOption *Option
 	for {
 		ru := p.peekNonWhitespace()
-		if toToken(string(ru)) == tRIGHTPAREN {
+		if toToken(string(ru)) == T_RIGHTPAREN {
 			rightParenTok = p.next()
 			break
 		}
@@ -80,7 +80,7 @@ func parseOptions(p *Parser, parent Node) (res []*Option, rightParenTok *Token, 
 		res = append(res, currOption)
 
 		ru = p.peekNonWhitespace()
-		if toToken(string(ru)) == tCOMMA {
+		if toToken(string(ru)) == T_COMMA {
 			p.next() // consume comma
 		}
 	}
