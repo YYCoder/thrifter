@@ -44,6 +44,32 @@ func TestEnum_basic(t *testing.T) {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 }
+
+func TestEnum_elemsMap(t *testing.T) {
+	parser := newParserOn(`enum a {
+		A = 1
+		B = 2;
+		C
+		D;
+	}`)
+	startTok := parser.next()
+	n := NewEnum(startTok, nil)
+	if err := n.parse(parser); err != nil {
+		t.Errorf("unexpected error: %v", err)
+		return
+	}
+
+	if got, want := len(n.ElemsMap), 4; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	for _, ele := range n.Elems {
+		hash := GenTokenHash(ele.StartToken)
+		if got, want := n.ElemsMap[hash], ele; got != want {
+			t.Errorf("got [%v] want [%v]", got, want)
+		}
+	}
+}
+
 func TestEnum_withOptions(t *testing.T) {
 	parser := newParserOn(`enum weekdays {
 		SUNDAY ( weekend = "yes" ),

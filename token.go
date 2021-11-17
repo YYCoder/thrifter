@@ -2,6 +2,8 @@ package thrifter
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -191,6 +193,14 @@ const (
 	MULTI_LINE_COMMENT             /* like this */
 	BASH_LIKE_COMMENT              // # like this
 )
+
+// Generate hash from token.Type + token.Raw + token.Pos, for nodes like enum/struct/service to find their element node when iterate over token.
+func GenTokenHash(t *Token) (res string) {
+	h := sha1.New()
+	val := fmt.Sprintf("%d_%s_%+v", t.Type, t.Raw, t.Pos)
+	hash := h.Sum([]byte(val))
+	return string(hash)
+}
 
 // isDigit returns true if the rune is a digit.
 func IsDigit(lit rune) bool {

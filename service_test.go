@@ -33,6 +33,31 @@ func TestService_basic(t *testing.T) {
 	}
 }
 
+func TestService_elemsMap(t *testing.T) {
+	parser := newParserOn(`service A {
+		double       testDouble(1: double thing) // test double
+		oneway void testOneway(1:i32 secondsToSleep)
+		void testException(1: string arg) throws(1: Xception err1),
+		map<UserId, map<Numberz,Insanity>> testInsanity(1: Insanity argument);
+	}`)
+	start := parser.next()
+	n := NewService(start, nil)
+	if err := n.parse(parser); err != nil {
+		t.Errorf("unexpected error: %v", err)
+		return
+	}
+
+	if got, want := len(n.Elems), 4; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	for _, ele := range n.Elems {
+		hash := GenTokenHash(ele.StartToken)
+		if got, want := n.ElemsMap[hash], ele; got != want {
+			t.Errorf("got [%v] want [%v]", got, want)
+		}
+	}
+}
+
 func TestService_withOptions(t *testing.T) {
 	parser := newParserOn(`service foo_service {
 		void foo() ( foo = "bar" )
@@ -184,6 +209,44 @@ func TestFunction_multipleArgs(t *testing.T) {
 	}
 	if got, want := n.EndToken.Value, ")"; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
+	}
+}
+
+func TestFunction_argsMap(t *testing.T) {
+	parser := newParserOn(`Xtruct testMulti(1: i8 arg0, 2: i32 arg1, 3: i64 arg2, 4: map<i16, string> arg3, 5: Numberz arg4, 6: UserId arg5)`)
+	n := NewFunction(nil)
+	if err := n.parse(parser); err != nil {
+		t.Errorf("unexpected error: %v", err)
+		return
+	}
+
+	if got, want := len(n.Args), 6; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	for _, ele := range n.Args {
+		hash := GenTokenHash(ele.StartToken)
+		if got, want := n.ArgsMap[hash], ele; got != want {
+			t.Errorf("got [%v] want [%v]", got, want)
+		}
+	}
+}
+
+func TestFunction_throwsMap(t *testing.T) {
+	parser := newParserOn(`void testException(1: string arg) throws(1: Xception err1),`)
+	n := NewFunction(nil)
+	if err := n.parse(parser); err != nil {
+		t.Errorf("unexpected error: %v", err)
+		return
+	}
+
+	if got, want := len(n.Throws), 1; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	for _, ele := range n.Throws {
+		hash := GenTokenHash(ele.StartToken)
+		if got, want := n.ThrowsMap[hash], ele; got != want {
+			t.Errorf("got [%v] want [%v]", got, want)
+		}
 	}
 }
 

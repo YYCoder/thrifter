@@ -1,6 +1,9 @@
 package thrifter
 
-import "testing"
+import (
+	"testing"
+	"text/scanner"
+)
 
 func TestIsNumber_int(t *testing.T) {
 	isFloat, isInt := IsNumber(`123`)
@@ -42,6 +45,43 @@ func TestIsNumber_invalidFloat(t *testing.T) {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 	if got, want := isFloat, false; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+}
+
+func TestGenTokenHash(t *testing.T) {
+	hash1 := GenTokenHash(&Token{
+		Type:  T_COMMENT,
+		Raw:   "// asdasd",
+		Value: " asdasd",
+		Pos: scanner.Position{
+			Line:   1,
+			Column: 1,
+		},
+	})
+	hash2 := GenTokenHash(&Token{
+		Type:  T_COMMENT,
+		Raw:   "// asdasd",
+		Value: " asdasd",
+		Pos: scanner.Position{
+			Line:   1,
+			Column: 1,
+		},
+	})
+	hash3 := GenTokenHash(&Token{
+		Type:  T_COMMENT,
+		Raw:   "// asdasd",
+		Value: " asdasd",
+		Pos: scanner.Position{
+			Line:   3,
+			Column: 1,
+		},
+	})
+
+	if got, want := hash1, hash2; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := hash1, hash3; got == want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 }

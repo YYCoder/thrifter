@@ -2,10 +2,11 @@ package thrifter
 
 type Service struct {
 	NodeCommonField
-	Ident   string
-	Elems   []*Function
-	Extends string
-	Options []*Option
+	Ident    string
+	Elems    []*Function
+	Extends  string
+	Options  []*Option
+	ElemsMap map[string]*Function // startToken hash => Function node
 }
 
 func NewService(start *Token, parent Node) *Service {
@@ -14,6 +15,7 @@ func NewService(start *Token, parent Node) *Service {
 			Parent:     parent,
 			StartToken: start,
 		},
+		ElemsMap: map[string]*Function{},
 	}
 }
 
@@ -83,10 +85,16 @@ func (r *Service) parseFunctions(p *Parser) (funcs []*Function, err error) {
 		if err = elem.parse(p); err != nil {
 			return nil, err
 		}
+		elem.patchToParentMap()
 		funcs = append(funcs, elem)
 	}
 	return
 }
+
+const (
+	FIELD_PARENT_TYPE_ARGS = iota + 1
+	FIELD_PARENT_TYPE_THROWS
+)
 
 type Function struct {
 	NodeCommonField
@@ -97,6 +105,8 @@ type Function struct {
 	Void         bool
 	Args         []*Field
 	Options      []*Option
+	ArgsMap      map[string]*Field // startToken hash => Argument Field
+	ThrowsMap    map[string]*Field // startToken hash => Throws Field
 }
 
 func NewFunction(parent Node) *Function {
@@ -104,6 +114,8 @@ func NewFunction(parent Node) *Function {
 		NodeCommonField: NodeCommonField{
 			Parent: parent,
 		},
+		ArgsMap:   map[string]*Field{},
+		ThrowsMap: map[string]*Field{},
 	}
 }
 
@@ -117,6 +129,12 @@ func (r *Function) NodeValue() interface{} {
 
 func (r *Function) String() string {
 	return toString(r.StartToken, r.EndToken)
+}
+
+func (r *Function) patchToParentMap() {
+	hash := GenTokenHash(r.StartToken)
+	parent := r.Parent.(*Service)
+	parent.ElemsMap[hash] = r
 }
 
 func (r *Function) parse(p *Parser) (err error) {
@@ -150,9 +168,9 @@ func (r *Function) parse(p *Parser) (err error) {
 	ident, _, _ = p.nextIdent(false)
 	r.Ident = ident
 
-	// parse fields
+	// parse argument fields
 	var rightParenTok *Token
-	r.Args, rightParenTok, err = r.parseFields(p)
+	r.Args, rightParenTok, err = r.parseFields(p, FIELD_PARENT_TYPE_ARGS)
 	if err != nil {
 		return err
 	}
@@ -169,7 +187,7 @@ func (r *Function) parse(p *Parser) (err error) {
 	// parse throws
 	tok := p.nextNonWhitespace()
 	if tok.Type == T_THROWS {
-		r.Args, rightParenTok, err = r.parseFields(p)
+		r.Throws, rightParenTok, err = r.parseFields(p, FIELD_PARENT_TYPE_THROWS)
 		if err != nil {
 			return err
 		}
@@ -211,7 +229,17 @@ func (r *Function) parseOptions(p *Parser) (res []*Option, rightParenTok *Token,
 	return
 }
 
-func (r *Function) parseFields(p *Parser) (fields []*Field, rightParenTok *Token, err error) {
+func (r *Function) patchFieldToMap(t int, node *Field) {
+	hash := GenTokenHash(node.StartToken)
+	switch t {
+	case FIELD_PARENT_TYPE_ARGS:
+		r.ArgsMap[hash] = node
+	case FIELD_PARENT_TYPE_THROWS:
+		r.ThrowsMap[hash] = node
+	}
+}
+
+func (r *Function) parseFields(p *Parser, t int) (fields []*Field, rightParenTok *Token, err error) {
 	ru := p.peekNonWhitespace()
 	if toToken(string(ru)) != T_LEFTPAREN {
 		return nil, nil, p.unexpected(string(ru), "(")
@@ -227,6 +255,7 @@ func (r *Function) parseFields(p *Parser) (fields []*Field, rightParenTok *Token
 		if err = elem.parse(p); err != nil {
 			return nil, nil, err
 		}
+		r.patchFieldToMap(t, elem)
 		fields = append(fields, elem)
 	}
 	return

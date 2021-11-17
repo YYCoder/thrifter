@@ -31,6 +31,31 @@ func TestStruct_basic(t *testing.T) {
 	}
 }
 
+func TestStruct_elemsMap(t *testing.T) {
+	parser := newParserOn(`struct Test{
+		1: required i32 Foo = 123 (api.test = "./test", api.a = 'asd',);
+		2: optional map<i64,string> Bar = { 123: "bar" }
+		3: set<i64> Set;
+		4: list<test.test.test> List = [aaa, bbb, ccc]; // for compatibility with framework
+	}`)
+	start := parser.next()
+	n := NewStruct(start, nil)
+	if err := n.parse(parser); err != nil {
+		t.Errorf("unexpected error: %v", err)
+		return
+	}
+
+	if got, want := len(n.Elems), 4; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	for _, ele := range n.Elems {
+		hash := GenTokenHash(ele.StartToken)
+		if got, want := n.ElemsMap[hash], ele; got != want {
+			t.Errorf("got [%v] want [%v]", got, want)
+		}
+	}
+}
+
 func TestStruct_withOptions(t *testing.T) {
 	parser := newParserOn(`struct A {
 		1: i32 Test;

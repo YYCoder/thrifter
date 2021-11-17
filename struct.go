@@ -8,10 +8,11 @@ const (
 
 type Struct struct {
 	NodeCommonField
-	Type    int
-	Ident   string
-	Elems   []*Field
-	Options []*Option
+	Type     int
+	Ident    string
+	Elems    []*Field
+	Options  []*Option
+	ElemsMap map[string]*Field // startToken hash => Field node
 }
 
 func NewStruct(start *Token, parent Node) *Struct {
@@ -29,7 +30,8 @@ func NewStruct(start *Token, parent Node) *Struct {
 			Parent:     parent,
 			StartToken: start,
 		},
-		Type: t,
+		Type:     t,
+		ElemsMap: map[string]*Field{},
 	}
 }
 
@@ -53,6 +55,11 @@ func (r *Struct) String() string {
 	return toString(r.StartToken, r.EndToken)
 }
 
+func (r *Struct) patchFieldToMap(node *Field) {
+	hash := GenTokenHash(node.StartToken)
+	r.ElemsMap[hash] = node
+}
+
 func (r *Struct) parse(p *Parser) (err error) {
 	p.peekNonWhitespace()
 	fullLit, _, _ := p.nextIdent(false)
@@ -73,6 +80,7 @@ func (r *Struct) parse(p *Parser) (err error) {
 		if err = elem.parse(p); err != nil {
 			return err
 		}
+		r.patchFieldToMap(elem)
 		r.Elems = append(r.Elems, elem)
 	}
 

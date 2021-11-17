@@ -4,9 +4,10 @@ import "strconv"
 
 type Enum struct {
 	NodeCommonField
-	Ident   string
-	Elems   []*EnumElement
-	Options []*Option
+	Ident    string
+	Elems    []*EnumElement
+	Options  []*Option
+	ElemsMap map[string]*EnumElement // startToken hash => EnumElement node
 }
 
 func NewEnum(start *Token, parent Node) *Enum {
@@ -15,6 +16,7 @@ func NewEnum(start *Token, parent Node) *Enum {
 			Parent:     parent,
 			StartToken: start,
 		},
+		ElemsMap: map[string]*EnumElement{},
 	}
 }
 
@@ -49,6 +51,7 @@ func (r *Enum) parse(p *Parser) (err error) {
 		if err = elem.parse(p); err != nil {
 			return err
 		}
+		elem.patchToParentMap()
 		r.Elems = append(r.Elems, elem)
 	}
 
@@ -90,6 +93,12 @@ func (r *EnumElement) NodeValue() interface{} {
 
 func (r *EnumElement) String() string {
 	return toString(r.StartToken, r.EndToken)
+}
+
+func (r *EnumElement) patchToParentMap() {
+	hash := GenTokenHash(r.StartToken)
+	parent := r.Parent.(*Enum)
+	parent.ElemsMap[hash] = r
 }
 
 func (r *EnumElement) parse(p *Parser) (err error) {
