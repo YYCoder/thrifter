@@ -222,7 +222,7 @@ func (p *Parser) nextNonWhitespace() (res *Token) {
 	r := p.peek()
 
 	// see if it's a comment
-	if string(r) == "/" {
+	if string(r) == "/" || string(r) == "#" {
 		p.scanner.Next() // consume comment first unicode character
 		isComment, commentType := p.isComment(r)
 		if isComment {
@@ -265,7 +265,7 @@ func (p *Parser) peekNonWhitespace() (r rune) {
 	r = p.peek()
 
 	// see if it's a comment
-	if string(r) == "/" {
+	if string(r) == "/" || string(r) == "#" {
 		p.scanner.Next() // consume comment first unicode character
 		isComment, commentType := p.isComment(r)
 		if isComment {
