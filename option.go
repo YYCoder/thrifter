@@ -33,6 +33,9 @@ func (r *Option) parse(p *Parser) (err error) {
 	if identTok == nil || identTok.Type != T_IDENT {
 		return p.unexpected(identTok.Raw, "identifier")
 	}
+	r.StartToken = identTok
+	r.Name = identTok.Raw
+	r.EndToken = identTok
 	// if there is no = token
 	tok := p.nextNonWhitespace()
 	if tok.Type != T_EQUALS {
@@ -45,16 +48,13 @@ func (r *Option) parse(p *Parser) (err error) {
 		return
 	}
 	// if it's string
-	tok, err = p.nextString()
+	strTok, err := p.nextString()
 	if err != nil {
 		return err
 	}
 
-	r.Name = identTok.Raw
-	r.Value = tok.Raw
-	r.Parent = r
-	r.StartToken = identTok
-	r.EndToken = tok
+	r.Value = strTok.Raw
+	r.EndToken = strTok
 	// since Options are always gathered in a slice during parent node parsing, we not need to link each Option with these pointers
 	r.Next = nil
 	r.Prev = nil

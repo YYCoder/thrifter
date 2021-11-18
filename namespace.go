@@ -31,12 +31,11 @@ func (r *Namespace) String() string {
 func (r *Namespace) parse(p *Parser) (err error) {
 	identTok := p.nextIdent(true)
 	r.Name = identTok.Raw
-	var endIdent *Token
 	identTok = p.nextIdent(true)
 	r.Value = identTok.Raw
 	ru := p.peekNonWhitespace()
 	if toToken(string(ru)) != T_LEFTPAREN {
-		r.EndToken = endIdent
+		r.EndToken = identTok
 		return
 	}
 	p.next() // consume (
