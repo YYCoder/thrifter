@@ -29,9 +29,9 @@ func (r *Option) String() string {
 
 func (r *Option) parse(p *Parser) (err error) {
 	// can't use keyword as option name
-	name, start, _ := p.nextIdent(false)
-	if start == nil || start.Type != T_IDENT {
-		return p.unexpected(name, "identifier")
+	identTok := p.nextIdent(false)
+	if identTok == nil || identTok.Type != T_IDENT {
+		return p.unexpected(identTok.Raw, "identifier")
 	}
 	// if there is no = token
 	tok := p.nextNonWhitespace()
@@ -50,10 +50,10 @@ func (r *Option) parse(p *Parser) (err error) {
 		return err
 	}
 
-	r.Name = name
+	r.Name = identTok.Raw
 	r.Value = tok.Raw
 	r.Parent = r
-	r.StartToken = start
+	r.StartToken = identTok
 	r.EndToken = tok
 	// since Options are always gathered in a slice during parent node parsing, we not need to link each Option with these pointers
 	r.Next = nil

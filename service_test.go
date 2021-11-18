@@ -250,6 +250,40 @@ func TestFunction_throwsMap(t *testing.T) {
 	}
 }
 
+func TestFunction_identWithDotArg(t *testing.T) {
+	parser := newParserOn(`applet.ChannelListResponse ChannelList(1: applet.ChannelListRequest req) (api.get = "/ky/feed/channel_list", api.serializer = "json"), //获取首页频道列表`)
+	n := NewFunction(nil)
+	if err := n.parse(parser); err != nil {
+		t.Errorf("unexpected error: %v", err)
+		return
+	}
+
+	if got, want := n.Ident, "ChannelList"; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := n.FunctionType.Type, FIELD_TYPE_IDENT; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := n.FunctionType.Ident, "applet.ChannelListResponse"; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := len(n.Args), 1; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := n.Args[0].FieldType.Type, FIELD_TYPE_IDENT; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := n.Args[0].FieldType.Ident, "applet.ChannelListRequest"; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := n.StartToken.Value, "applet.ChannelListResponse"; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+	if got, want := n.EndToken.Value, ","; got != want {
+		t.Errorf("got [%v] want [%v]", got, want)
+	}
+}
+
 func TestFunction_basic(t *testing.T) {
 	parser := newParserOn(`double       testDouble(1: double thing) // test double`)
 	n := NewFunction(nil)

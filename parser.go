@@ -152,36 +152,44 @@ func (p *Parser) nextComment(commentType int) (res *Token, err error) {
 	return
 }
 
-// TODO: concat dot-separated ident into one token
 // Find next identifier, it will consume white spaces during scanning.
 // 1. Allow leading && trailing dot.
 // 2. If keywordAllowed == true, it will allow keyword inside an identifier, e.g. enum.aaa.struct. In this case, the token for keyword will be replace to T_IDENT, since the meaning for it is no more a keyword.
-// 3. For dot-separated identifier, it will automatically connected to a single string.
-func (p *Parser) nextIdent(keywordAllowed bool) (res string, startToken *Token, endToken *Token) {
+// 3. For dot-separated identifier, it will automatically connected to a single string, and return one single token.
+func (p *Parser) nextIdent(keywordAllowed bool) (res *Token) {
 	var fullLit string
 	var skipDot bool
 	// if buffer containers a token, consume buffer first
-	if p.buf != nil && p.buf.Type == T_IDENT {
-		startToken, endToken = p.buf, p.buf
-		fullLit = p.buf.Value
+	if p.buf != nil {
+		res = p.buf
 		p.buf = nil
+		return
 	} else {
-		t := p.nextNonWhitespace()
-		tok, lit := t.Type, t.Value
+		p.peekNonWhitespace()
+		p.scanner.Scan()
+		lit := p.scanner.TokenText()
+		tok := toToken(lit)
 		if T_IDENT != tok && T_DOT != tok {
 			// can be keyword, change its token.Type
 			if IsKeyword(tok) && keywordAllowed {
-				t.Type = T_IDENT
+				tok = T_IDENT
 			} else {
+				// if its not valid ident or keyword or dot, save it to buffer until next scan
+				p.buf = &Token{
+					Type:  tok,
+					Raw:   lit,
+					Value: lit,
+					Prev:  p.currToken,
+				}
+				p.chainToken(p.buf)
 				return
 			}
 			// proceed with keyword as first literal
 		}
-		startToken, endToken = t, t
 		fullLit = lit
 		// if we have a leading dot, we need to skip dot handling in first iteration
 		skipDot = false
-		if t.Type == T_DOT {
+		if tok == T_DOT {
 			skipDot = true
 		}
 	}
@@ -195,22 +203,46 @@ func (p *Parser) nextIdent(keywordAllowed bool) (res string, startToken *Token, 
 			if '.' != r {
 				break
 			}
-			endToken = p.next() // consume dot
+			p.scanner.Next() // consume dot
 		}
 		// scan next token, see if it's a identifier or keyword, if not, save it to p.buf until next p.next() calling
-		tok := p.next()
-		if IsKeyword(tok.Type) && keywordAllowed {
-			tok.Type = T_IDENT
+		p.scanner.Scan()
+		lit := p.scanner.TokenText()
+		tok := toToken(lit)
+		if IsKeyword(tok) && keywordAllowed {
+			tok = T_IDENT
 		}
-		if T_IDENT != tok.Type {
+		if T_IDENT != tok {
 			fullLit = fmt.Sprintf("%s.", fullLit)
-			p.buf = tok
-			break
+			res = &Token{
+				Type:  T_IDENT,
+				Raw:   fullLit,
+				Value: fullLit,
+				Pos:   p.scanner.Position,
+				Prev:  p.currToken,
+			}
+			p.chainToken(res)
+			p.buf = &Token{
+				Type:  tok,
+				Raw:   lit,
+				Value: lit,
+				Prev:  res,
+			}
+			p.chainToken(p.buf)
+			return
 		}
-		fullLit = fmt.Sprintf("%s.%s", fullLit, tok.Value)
-		endToken = tok
+		fullLit = fmt.Sprintf("%s.%s", fullLit, lit)
 	}
-	return fullLit, startToken, endToken
+
+	res = &Token{
+		Type:  T_IDENT,
+		Raw:   fullLit,
+		Value: fullLit,
+		Pos:   p.scanner.Position,
+		Prev:  p.currToken,
+	}
+	p.chainToken(res)
+	return
 }
 
 func (p *Parser) peek() rune {

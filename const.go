@@ -44,8 +44,8 @@ func (r *Const) parse(p *Parser) (err error) {
 		return
 	}
 	p.peekNonWhitespace()
-	ident, _, _ := p.nextIdent(false)
-	r.Ident = ident
+	identTok := p.nextIdent(false)
+	r.Ident = identTok.Raw
 	ru := p.peekNonWhitespace()
 	if toToken(string(ru)) != T_EQUALS {
 		return p.unexpected(string(ru), "=")
@@ -141,14 +141,14 @@ func (r *ConstValue) parse(p *Parser) (err error) {
 		}
 		r.EndToken = r.Map.EndToken
 	} else {
-		fullLit, startTok, endTok := p.nextIdent(false)
-		if startTok.Type != T_IDENT || endTok.Type != T_IDENT {
-			return p.unexpected("identifier", fullLit)
+		identTok := p.nextIdent(false)
+		if identTok.Type != T_IDENT {
+			return p.unexpected("identifier", identTok.Raw)
 		}
 		r.Type = CONST_VALUE_IDENT
-		r.StartToken = startTok
-		r.EndToken = endTok
-		r.Value = fullLit
+		r.StartToken = identTok
+		r.EndToken = identTok
+		r.Value = identTok.Raw
 	}
 
 	return

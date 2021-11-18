@@ -33,8 +33,8 @@ func (r *Service) String() string {
 
 func (r *Service) parse(p *Parser) (err error) {
 	p.peekNonWhitespace()
-	fullLit, _, _ := p.nextIdent(false)
-	r.Ident = fullLit
+	identTok := p.nextIdent(false)
+	r.Ident = identTok.Raw
 	tok := p.nextNonWhitespace()
 	if tok.Type == T_LEFTCURLY {
 		r.Elems, err = r.parseFunctions(p)
@@ -52,8 +52,8 @@ func (r *Service) parse(p *Parser) (err error) {
 			return err
 		}
 	} else if tok.Value == "extends" {
-		fullLit, _, _ := p.nextIdent(false)
-		r.Extends = fullLit
+		identTok := p.nextIdent(false)
+		r.Extends = identTok.Raw
 		tok := p.nextNonWhitespace()
 		if tok.Type == T_LEFTCURLY {
 			r.Elems, err = r.parseFunctions(p)
@@ -139,13 +139,13 @@ func (r *Function) patchToParentMap() {
 
 func (r *Function) parse(p *Parser) (err error) {
 	p.peekNonWhitespace()
-	ident, startTok, _ := p.nextIdent(true)
-	if ident == "oneway" {
-		r.StartToken = startTok
+	identTok := p.nextIdent(true)
+	if identTok.Raw == "oneway" {
+		r.StartToken = identTok
 		r.Oneway = true
 		p.peekNonWhitespace()
-		ident, _, _ := p.nextIdent(true)
-		if ident == "void" {
+		identTok := p.nextIdent(true)
+		if identTok.Raw == "void" {
 			r.Void = true
 		} else {
 			r.FunctionType = NewFieldType(r)
@@ -153,11 +153,11 @@ func (r *Function) parse(p *Parser) (err error) {
 				return err
 			}
 		}
-	} else if ident == "void" {
-		r.StartToken = startTok
+	} else if identTok.Raw == "void" {
+		r.StartToken = identTok
 		r.Void = true
 	} else {
-		p.buf = startTok
+		p.buf = identTok
 		r.FunctionType = NewFieldType(r)
 		if err = r.FunctionType.parse(p); err != nil {
 			return err
@@ -165,8 +165,8 @@ func (r *Function) parse(p *Parser) (err error) {
 		r.StartToken = r.FunctionType.StartToken
 	}
 	p.peekNonWhitespace()
-	ident, _, _ = p.nextIdent(false)
-	r.Ident = ident
+	identTok = p.nextIdent(false)
+	r.Ident = identTok.Raw
 
 	// parse argument fields
 	var rightParenTok *Token

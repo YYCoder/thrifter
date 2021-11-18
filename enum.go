@@ -34,8 +34,8 @@ func (r *Enum) String() string {
 
 func (r *Enum) parse(p *Parser) (err error) {
 	p.peekNonWhitespace()
-	fullLit, _, _ := p.nextIdent(false)
-	r.Ident = fullLit
+	identTok := p.nextIdent(false)
+	r.Ident = identTok.Raw
 	ru := p.peekNonWhitespace()
 	if toToken(string(ru)) != T_LEFTCURLY {
 		return p.unexpected(string(ru), "{")
@@ -103,16 +103,16 @@ func (r *EnumElement) patchToParentMap() {
 
 func (r *EnumElement) parse(p *Parser) (err error) {
 	p.peekNonWhitespace()
-	fullLit, startTok, endTok := p.nextIdent(false)
-	r.StartToken = startTok
-	r.Ident = fullLit
+	identTok := p.nextIdent(false)
+	r.StartToken = identTok
+	r.Ident = identTok.Raw
 	ru := p.peekNonWhitespace()
 	// if there is no = after enum field identifier, then directly parse EndToken
 	if toToken(string(ru)) != T_EQUALS {
 		// parse options
 		ru = p.peekNonWhitespace()
 		if toToken(string(ru)) != T_LEFTPAREN {
-			r.EndToken = endTok
+			r.EndToken = identTok
 			// parse separator
 			if err = r.parseSeparator(p); err != nil {
 				return err

@@ -62,8 +62,8 @@ func (r *Struct) patchFieldToMap(node *Field) {
 
 func (r *Struct) parse(p *Parser) (err error) {
 	p.peekNonWhitespace()
-	fullLit, _, _ := p.nextIdent(false)
-	r.Ident = fullLit
+	identTok := p.nextIdent(false)
+	r.Ident = identTok.Raw
 	ru := p.peekNonWhitespace()
 	if toToken(string(ru)) != T_LEFTCURLY {
 		return p.unexpected(string(ru), "{")

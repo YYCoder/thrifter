@@ -12,15 +12,12 @@ func newParserOn(def string) *Parser {
 
 func TestNextIdent_singleIdent(t *testing.T) {
 	parser := newParserOn(`   ab2 `)
-	lit, start, end := parser.nextIdent(false)
+	tok := parser.nextIdent(false)
 
-	if got, want := start.Type, T_IDENT; got != want {
+	if got, want := tok.Type, T_IDENT; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
-	if got, want := end.Type, T_IDENT; got != want {
-		t.Errorf("got [%v] want [%v]", got, want)
-	}
-	if got, want := lit, "ab2"; got != want {
+	if got, want := tok.Raw, "ab2"; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 }
@@ -28,105 +25,84 @@ func TestNextIdent_singleIdent(t *testing.T) {
 func TestNextIdent_mulitpleWhitespace(t *testing.T) {
 	parser := newParserOn(`
 	 	ab2 `)
-	lit, start, end := parser.nextIdent(false)
+	tok := parser.nextIdent(false)
 
-	if got, want := start.Type, T_IDENT; got != want {
+	if got, want := tok.Type, T_IDENT; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
-	if got, want := end.Type, T_IDENT; got != want {
-		t.Errorf("got [%v] want [%v]", got, want)
-	}
-	if got, want := lit, "ab2"; got != want {
+	if got, want := tok.Raw, "ab2"; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 }
 
 func TestNextIdent_trailingDot(t *testing.T) {
 	parser := newParserOn(` abc.def. `)
-	lit, start, end := parser.nextIdent(false)
+	tok := parser.nextIdent(false)
 
-	if got, want := start.Type, T_IDENT; got != want {
+	if got, want := tok.Type, T_IDENT; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
-	if got, want := end.Type, T_DOT; got != want {
-		t.Errorf("got [%v] want [%v]", got, want)
-	}
-	if got, want := lit, "abc.def."; got != want {
+	if got, want := tok.Raw, "abc.def."; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 }
 
 func TestNextIdent_leadingDot(t *testing.T) {
 	parser := newParserOn(` .abc.def `)
-	lit, start, end := parser.nextIdent(false)
+	tok := parser.nextIdent(false)
 
-	if got, want := start.Type, T_DOT; got != want {
+	if got, want := tok.Type, T_IDENT; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
-	if got, want := end.Type, T_IDENT; got != want {
-		t.Errorf("got [%v] want [%v]", got, want)
-	}
-	if got, want := lit, ".abc.def"; got != want {
+	if got, want := tok.Raw, ".abc.def"; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 }
 
 func TestNextIdent_leadingAndTrailingDot(t *testing.T) {
 	parser := newParserOn(` .abc.def. `)
-	lit, start, end := parser.nextIdent(false)
+	tok := parser.nextIdent(false)
 
-	if got, want := start.Type, T_DOT; got != want {
+	if got, want := tok.Type, T_IDENT; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
-	if got, want := end.Type, T_DOT; got != want {
-		t.Errorf("got [%v] want [%v]", got, want)
-	}
-	if got, want := lit, ".abc.def."; got != want {
+	if got, want := tok.Raw, ".abc.def."; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 }
 
 func TestNextIdent_underscore(t *testing.T) {
 	parser := newParserOn(`abc_def_123 `)
-	lit, start, end := parser.nextIdent(false)
+	tok := parser.nextIdent(false)
 
-	if got, want := start.Type, T_IDENT; got != want {
+	if got, want := tok.Type, T_IDENT; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
-	if got, want := start, end; got != want {
-		t.Errorf("got [%v] want [%v]", got, want)
-	}
-	if got, want := lit, "abc_def_123"; got != want {
+	if got, want := tok.Raw, "abc_def_123"; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 }
 
 func TestNextIdent_keyword(t *testing.T) {
 	parser := newParserOn(`enum.def.struct `)
-	lit, start, end := parser.nextIdent(true)
+	tok := parser.nextIdent(true)
 
-	if got, want := start.Type, T_IDENT; got != want {
+	if got, want := tok.Type, T_IDENT; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
-	if got, want := end.Type, T_IDENT; got != want {
-		t.Errorf("got [%v] want [%v]", got, want)
-	}
-	if got, want := lit, "enum.def.struct"; got != want {
+	if got, want := tok.Raw, "enum.def.struct"; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 }
 
 func TestNextIdent_star(t *testing.T) {
 	parser := newParserOn(` * `)
-	lit, start, end := parser.nextIdent(true)
+	tok := parser.nextIdent(true)
 
-	if got, want := start.Type, T_IDENT; got != want {
+	if got, want := tok.Type, T_IDENT; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
-	if got, want := end.Type, T_IDENT; got != want {
-		t.Errorf("got [%v] want [%v]", got, want)
-	}
-	if got, want := lit, "*"; got != want {
+	if got, want := tok.Raw, "*"; got != want {
 		t.Errorf("got [%v] want [%v]", got, want)
 	}
 }

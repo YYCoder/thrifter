@@ -38,9 +38,9 @@ func (r *TypeDef) parse(p *Parser) (err error) {
 		return p.unexpected(r.Type.Ident, "base type or map or list or set")
 	}
 
-	fullLit, _, endTok := p.nextIdent(true)
-	r.Ident = fullLit
-	r.EndToken = endTok
+	identTok := p.nextIdent(true)
+	r.Ident = identTok.Raw
+	r.EndToken = identTok
 
 	// parse options
 	ru := p.peekNonWhitespace()

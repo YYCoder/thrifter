@@ -57,7 +57,7 @@ func (r *Field) parse(p *Parser) (err error) {
 
 	// parse requiredness
 	p.peekNonWhitespace()
-	tok := p.next()
+	tok := p.nextIdent(true)
 	if tok.Value == "required" || tok.Value == "optional" {
 		r.Requiredness = tok.Value
 	} else {
@@ -72,8 +72,8 @@ func (r *Field) parse(p *Parser) (err error) {
 
 	// parse identifier
 	p.peekNonWhitespace()
-	ident, _, endTok := p.nextIdent(false)
-	r.Ident = ident
+	identTok := p.nextIdent(false)
+	r.Ident = identTok.Raw
 
 	// parse DefaultValue/Options
 	ru = p.peekNonWhitespace()
@@ -112,7 +112,7 @@ func (r *Field) parse(p *Parser) (err error) {
 			return err
 		}
 	} else {
-		if err = r.parseEnd(endTok, p); err != nil {
+		if err = r.parseEnd(identTok, p); err != nil {
 			return err
 		}
 	}
