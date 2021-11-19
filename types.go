@@ -26,6 +26,6 @@ type Node interface {
 	parse(p *Parser) error
 	// get node value
 	NodeValue() interface{}
-	// get node type, value specified as above, e.g. NODE_TYPE_CONST
+	// get node type, value specified from each node
 	NodeType() string
 }
