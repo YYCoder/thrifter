@@ -175,7 +175,7 @@ type Node interface {
 
 ```go
 for _, node := range thrift.Nodes {
-    switch 
+    switch node.NodeType() {
     case "Namespace":
         n := node.(*thrifter.Namespace)
         fmt.Printf("Namespace: %+v", n)

@@ -10,7 +10,7 @@
 [中文文档](./docs/cn.md)
 
 ## Inspiration
-There are several thrift parsers on github, but each of them have issues on preserve original format, since mostly, they are used to generate rpc code. But, this project has different purpose, which is focus on helping you write thrift code more efficiently, thanks to its non-destructive code transformation. Since it's a non-destructive parser, we can do a lot of stuff on top of it, such as **code formatting**, **code transforming**, etc.
+There are several thrift parsers on github, but each of them have issues on preserve original format, since mostly, they are used to generate rpc code. But, this project serves different purpose, which is focus on helping you write thrift code more efficiently, thanks to its non-destructive code transformation. Since it's a non-destructive parser, we can do a lot of stuff on top of it, such as **code formatting**, **code transforming**, etc.
 
 Currently, it's mainly used by my other little project called [protobuf-thrift](https://github.com/YYCoder/protobuf-thrift), which is a code transformer between protobuf and thrift.
 
@@ -170,7 +170,7 @@ And the last interface `Node` represents a thrifter node. Since it's a interface
 
 ```go
 for _, node := range thrift.Nodes {
-    switch 
+    switch node.NodeType() {
     case "Namespace":
         n := node.(*thrifter.Namespace)
         fmt.Printf("Namespace: %+v", n)
