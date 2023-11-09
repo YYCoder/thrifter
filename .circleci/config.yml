@@ -7,7 +7,7 @@ jobs:
   test-coverage:
     docker: # run the steps with Docker
       # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
-      - image: circleci/golang:1.21
+      - image: cimg/go:1.21
         auth:
           username: "19900929"
           password: $DOCKERHUB_PASSWORD # context / project UI env-var reference
@@ -31,7 +31,7 @@ jobs:
   unit-test:
     docker: # run the steps with Docker
       # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
-      - image: circleci/golang:1.21
+      - image: cimg/go:1.21
         auth:
           username: "19900929"
           password: $DOCKERHUB_PASSWORD # context / project UI env-var reference
